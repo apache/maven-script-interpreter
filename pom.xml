@@ -33,14 +33,19 @@
   <description>This component provides some utilities to interpret/execute some scripts for various implementations: groovy or beanshell.</description>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/maven/shared/trunk/maven-script-interpreter</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/shared/trunk/maven-script-interpreter</developerConnection>
-    <url>http://svn.apache.org/viewvc/maven/shared/trunk/maven-script-interpreter</url>
+    <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-script-interpreter.git</connection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/maven-script-interpreter.git</developerConnection>
+    <url>https://github.com/apache/maven-script-interpreter/tree/${project.scm.tag}</url>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
     <url>https://jira.codehaus.org/browse/MSHARED/component/12326451</url>
   </issueManagement>
+  <ciManagement>
+    <system>Jenkins</system>
+    <url>https://builds.apache.org/job/maven-box/job/maven-script-interpreter/</url>
+  </ciManagement>
   <distributionManagement>
     <site>
       <id>apache.website</id>
