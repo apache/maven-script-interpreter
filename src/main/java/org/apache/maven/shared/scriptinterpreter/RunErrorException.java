@@ -24,7 +24,6 @@ package org.apache.maven.shared.scriptinterpreter;
  * script throwing an exception or an error in forking the Maven build itself.
  * 
  * @author Stephen Connolly
- * @version $Id$
  */
 public class RunErrorException
     extends RunFailureException

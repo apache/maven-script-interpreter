@@ -24,7 +24,6 @@ package org.apache.maven.shared.scriptinterpreter;
  * script or a failure of the forked Maven build itself.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class RunFailureException
     extends Exception

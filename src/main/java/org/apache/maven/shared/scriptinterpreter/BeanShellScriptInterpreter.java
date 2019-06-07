@@ -36,7 +36,6 @@ import org.codehaus.plexus.component.annotations.Component;
  * Provides a facade to evaluate BeanShell scripts.
  *
  * @author Benjamin Bentmann
- * @version $Id$
  */
 @Component( role = ScriptInterpreter.class, hint = "bsh" )
 public class BeanShellScriptInterpreter
@@ -46,6 +45,7 @@ public class BeanShellScriptInterpreter
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object evaluateScript( String script, List<String> classPath, Map<String, ? extends Object> globalVariables,
                                   PrintStream scriptOutput )
         throws ScriptEvaluationException

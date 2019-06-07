@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 /**
- * @version $Id$
  */
 public class FileLogger
     implements ExecutionLogger
@@ -84,6 +83,7 @@ public class FileLogger
 
         Runnable finalizer = new Runnable()
         {
+            @Override
             public void run()
             {
                 try
@@ -115,6 +115,7 @@ public class FileLogger
      * 
      * @return The underlying stream used to write message to the log file, never <code>null</code>.
      */
+    @Override
     public PrintStream getPrintStream()
     {
         return stream;
@@ -125,6 +126,7 @@ public class FileLogger
      * 
      * @param line The message to log.
      */
+    @Override
     public void consumeLine( String line )
     {
         stream.println( line );
@@ -152,6 +154,7 @@ public class FileLogger
     /**
      * Closes the underlying file stream.
      */
+    @Override
     protected void finalize()
     {
         if ( shouldFinalize )

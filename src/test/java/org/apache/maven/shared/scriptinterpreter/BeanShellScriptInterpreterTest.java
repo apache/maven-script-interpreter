@@ -30,7 +30,6 @@ import java.util.Map;
  * Tests the BeanShell interpreter facade.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class BeanShellScriptInterpreterTest
     extends TestCase

@@ -37,7 +37,6 @@ import java.util.Map;
  * Runs pre-/post-build hook scripts.
  *
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class ScriptRunner
 {

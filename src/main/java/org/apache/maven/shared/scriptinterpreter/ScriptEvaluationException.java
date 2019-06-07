@@ -24,7 +24,6 @@ package org.apache.maven.shared.scriptinterpreter;
  * exception triggered by the methods it invoked.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class ScriptEvaluationException
     extends Exception

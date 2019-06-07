@@ -30,7 +30,6 @@ import java.util.Map;
  * Tests the Groovy interpreter facade.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public class GroovyScriptInterpreterTest
     extends TestCase

@@ -28,7 +28,6 @@ import java.util.Map;
  * interpreter implementation should be stateless and support reuse.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 public interface ScriptInterpreter
 {

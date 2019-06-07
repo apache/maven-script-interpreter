@@ -35,7 +35,6 @@ import java.util.Map;
  * Provides a facade to evaluate Groovy scripts.
  * 
  * @author Benjamin Bentmann
- * @version $Id$
  */
 @Component( role = ScriptInterpreter.class, hint = "groovy" )
 public class GroovyScriptInterpreter
@@ -45,6 +44,7 @@ public class GroovyScriptInterpreter
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object evaluateScript( String script, List<String> classPath, Map<String, ? extends Object> globalVariables,
                                   PrintStream scriptOutput )
         throws ScriptEvaluationException
