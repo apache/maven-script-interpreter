@@ -22,40 +22,75 @@ package org.apache.maven.shared.scriptinterpreter;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the Groovy interpreter facade.
- * 
+ *
  * @author Benjamin Bentmann
  */
 public class GroovyScriptInterpreterTest
 {
     @Test
-    public void testEvaluateScript()
-        throws Exception
+    public void testEvaluateScript() throws Exception
     {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
         assertEquals( Boolean.TRUE,
-                interpreter.evaluateScript( "print \"Test\"\nreturn true", null, null, new PrintStream( out ) ) );
+                interpreter.evaluateScript( "print \"Test\"\nreturn true",
+                        null, null, new PrintStream( out ) ) );
         assertEquals( "Test", out.toString() );
     }
 
     @Test
-    public void testEvaluateScriptVars()
-        throws Exception
+    public void testEvaluateScriptWithDefaultClassPath() throws Exception
+    {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
+
+        assertEquals( Boolean.TRUE, interpreter.evaluateScript(
+                "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
+                null, null, new PrintStream( out ) ) );
+
+        String testClassPath = new File( "target/test-classes/class-path.txt" )
+                .toURI().getPath();
+        assertEquals( testClassPath, out.toString() );
+    }
+
+    @Test
+    public void testEvaluateScriptWithCustomClassPath() throws Exception
+    {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
+
+        List<String> classPath = Collections.singletonList( new File( "src/test-class-path" ).getAbsolutePath() );
+
+        assertEquals( Boolean.TRUE, interpreter.evaluateScript(
+                "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
+                classPath, null, new PrintStream( out ) ) );
+
+        String testClassPath = new File( "src/test-class-path/class-path.txt" )
+                .toURI().getPath();
+        assertEquals( testClassPath, out.toString() );
+    }
+
+    @Test
+    public void testEvaluateScriptVars() throws Exception
     {
         Map<String, Object> vars = new HashMap<>();
         vars.put( "testVar", "data" );
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
         assertEquals( Boolean.TRUE,
-                interpreter.evaluateScript( "print testVar\nreturn true", null, vars, new PrintStream( out ) ) );
+                interpreter.evaluateScript( "print testVar\nreturn true",
+                        null, vars, new PrintStream( out ) ) );
         assertEquals( "data", out.toString() );
     }
 

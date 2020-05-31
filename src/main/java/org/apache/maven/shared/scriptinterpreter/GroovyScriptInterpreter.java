@@ -21,12 +21,13 @@ package org.apache.maven.shared.scriptinterpreter;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import org.apache.tools.ant.AntClassLoader;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.tools.RootLoader;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -50,31 +51,26 @@ class GroovyScriptInterpreter
         PrintStream origOut = System.out;
         PrintStream origErr = System.err;
 
-        try
+        try ( RootLoader childFirstLoader = new RootLoader( new URL[] {}, getClass().getClassLoader() ) )
         {
-            CompilerConfiguration config = new CompilerConfiguration( CompilerConfiguration.DEFAULT );
 
             if ( scriptOutput != null )
             {
                 System.setErr( scriptOutput );
                 System.setOut( scriptOutput );
-                config.setOutput( new PrintWriter( scriptOutput ) );
             }
 
-            ClassLoader loader = null;
             if ( classPath != null && !classPath.isEmpty() )
             {
-                AntClassLoader childFirstLoader = new AntClassLoader( getClass().getClassLoader(), false );
                 for ( String path : classPath )
                 {
-                    childFirstLoader.addPathComponent( new File( path ) );
+                    childFirstLoader.addURL( new File( path ).toURI().toURL() );
                 }
-                loader = childFirstLoader;
             }
 
-            Binding binding = new Binding( globalVariables );
-
-            GroovyShell interpreter = new GroovyShell( loader, binding, config );
+            GroovyShell interpreter = new GroovyShell( childFirstLoader,
+                    new Binding( globalVariables ),
+                    new CompilerConfiguration( CompilerConfiguration.DEFAULT ) );
 
             try
             {
@@ -88,6 +84,10 @@ class GroovyScriptInterpreter
             {
                 throw new ScriptEvaluationException( e );
             }
+        }
+        catch ( IOException e )
+        {
+            throw new ScriptEvaluationException( e );
         }
         finally
         {
