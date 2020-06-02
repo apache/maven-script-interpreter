@@ -73,11 +73,36 @@ ${project.name}
   See {{{./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html}javadoc}} for run method.
 
 +---------
-    SystemStreamLog systemStreamLog = new SystemStreamLog();
 
-    ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
+    ScriptRunner scriptRunner = new ScriptRunner( );
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
                       new FileLogger( logFile ), "foo", true );
++---------
+
+* Mirror output from script interpreter
+
+  In order to do something more with script output, eg. log by your application you must implement FileLoggerMirrorHandler
+
++---------
+
+class MyMirrorHandler implements FileLoggerMirrorHandler
+{
+    void consumeOutput( String message )
+    {
+        // this method is invoked every time when flush occurs on the underlying stream.
+    }
+}
+
++---------
+
+  Now use it:
+
++---------
+
+      ScriptRunner scriptRunner = new ScriptRunner( );
+      scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
+                        new FileLogger( logFile, new MyMirrorHandler() ), "foo", true );
+
 +---------
 
 ** Global variables

@@ -1,4 +1,5 @@
 package org.apache.maven.shared.scriptinterpreter;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,7 +19,6 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.shared.utils.io.FileUtils;
 import org.junit.Test;
 
@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -33,67 +34,108 @@ import static org.junit.Assert.assertTrue;
  */
 public class ScriptRunnerTest
 {
+
     @Test
-    public void testBeanshell()
-        throws Exception
+    public void testBeanshell() throws Exception
     {
         File logFile = new File( "target/build.log" );
         if ( logFile.exists() )
         {
             logFile.delete();
         }
-        SystemStreamLog systemStreamLog = new SystemStreamLog();
 
-        ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
-        scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
-        scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                          new FileLogger( logFile ), "foo", true );
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
+            scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify",
+                    buildContext(), fileLogger, "foo", true );
+        }
 
         String logContent = FileUtils.fileRead( logFile );
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/verify.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
         assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks" ) );
 
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
     @Test
-    public void testBeanshellWithFile()
-        throws Exception
+    public void failedBeanshellShouldCreateProperLogsMessage() throws Exception
     {
         File logFile = new File( "target/build.log" );
         if ( logFile.exists() )
         {
             logFile.delete();
         }
-        SystemStreamLog systemStreamLog = new SystemStreamLog();
 
-        ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
-        scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
-        scriptRunner.run( "test", new File( "src/test/resources/bsh-test/verify.bsh" ), buildContext(),
-                          new FileLogger( logFile ), "foo", true );
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        Exception catchedException = null;
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "failed",
+                    buildContext(), fileLogger, "foo", false );
+        }
+        catch ( Exception e )
+        {
+            catchedException = e;
+        }
+
+        assertTrue( catchedException instanceof RunErrorException );
+        String logContent = FileUtils.fileRead( logFile );
+        assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/failed.bsh" ).getPath() ) );
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
+    }
+
+    @Test
+    public void testBeanshellWithFile() throws Exception
+    {
+        File logFile = new File( "target/build.log" );
+        if ( logFile.exists() )
+        {
+            logFile.delete();
+        }
+
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
+            scriptRunner.run( "test", new File( "src/test/resources/bsh-test/verify.bsh" ),
+                    buildContext(), fileLogger, "foo", true );
+        }
 
         String logContent = FileUtils.fileRead( logFile );
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/verify.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
 
-
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
     @Test
-    public void testGroovy()
-        throws Exception
+    public void testGroovy() throws Exception
     {
         File logFile = new File( "target/build.log" );
         if ( logFile.exists() )
         {
             logFile.delete();
         }
-        SystemStreamLog systemStreamLog = new SystemStreamLog();
 
-        ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
-        scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
-        scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ), "verify", buildContext(),
-                          new FileLogger( logFile ), "foo", true );
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
+            scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ), "verify",
+                    buildContext(), fileLogger, "foo", true );
+        }
 
         String logContent = FileUtils.fileRead( logFile );
         assertTrue(
@@ -101,31 +143,63 @@ public class ScriptRunnerTest
         assertTrue( logContent.contains( "foo=bar" ) );
         assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks" ) );
 
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
     @Test
-    public void testGroovyWithFile()
-        throws Exception
+    public void failedGroovyShouldCreateProperLogsMessage() throws Exception
     {
         File logFile = new File( "target/build.log" );
         if ( logFile.exists() )
         {
             logFile.delete();
         }
-        SystemStreamLog systemStreamLog = new SystemStreamLog();
 
-        ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
-        scriptRunner.run( "test", new File( "src/test/resources/groovy-test/verify.groovy" ), buildContext(),
-                          new FileLogger( logFile ), "foo", true );
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
+        Exception catchedException = null;
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ), "failed",
+                    buildContext(), fileLogger, "foo", true );
+        }
+        catch ( Exception e )
+        {
+            catchedException = e;
+        }
+
+        assertTrue( catchedException instanceof RunFailureException );
         String logContent = FileUtils.fileRead( logFile );
-        assertTrue(
-                logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
-        assertTrue( logContent.contains( "foo=bar" ) );
-
-
+        assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/failed.groovy" ).getPath() ) );
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
+    @Test
+    public void testGroovyWithFile() throws Exception
+    {
+        File logFile = new File( "target/build.log" );
+        if ( logFile.exists() )
+        {
+            logFile.delete();
+        }
+
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.run( "test", new File( "src/test/resources/groovy-test/verify.groovy" ),
+                    buildContext(), fileLogger, "foo", true );
+        }
+
+        String logContent = FileUtils.fileRead( logFile );
+        assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
+        assertTrue( logContent.contains( "foo=bar" ) );
+
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
+    }
 
     private Map<String, ? extends Object> buildContext()
     {
@@ -133,5 +207,4 @@ public class ScriptRunnerTest
         context.put( "foo", "bar" );
         return context;
     }
-
 }
