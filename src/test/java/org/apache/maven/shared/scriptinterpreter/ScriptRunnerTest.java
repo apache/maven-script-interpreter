@@ -18,20 +18,22 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import junit.framework.TestCase;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.shared.utils.io.FileUtils;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Olivier Lamy
  */
 public class ScriptRunnerTest
-    extends TestCase
 {
+    @Test
     public void testBeanshell()
         throws Exception
     {
@@ -50,10 +52,11 @@ public class ScriptRunnerTest
         String logContent = FileUtils.fileRead( logFile );
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/verify.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
-        assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks"));
+        assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks" ) );
 
     }
 
+    @Test
     public void testBeanshellWithFile()
         throws Exception
     {
@@ -76,6 +79,7 @@ public class ScriptRunnerTest
 
     }
 
+    @Test
     public void testGroovy()
         throws Exception
     {
@@ -92,12 +96,14 @@ public class ScriptRunnerTest
                           new FileLogger( logFile ), "foo", true );
 
         String logContent = FileUtils.fileRead( logFile );
-        assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
+        assertTrue(
+                logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
-        assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks"));
+        assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks" ) );
 
     }
 
+    @Test
     public void testGroovyWithFile()
         throws Exception
     {
@@ -113,7 +119,8 @@ public class ScriptRunnerTest
                           new FileLogger( logFile ), "foo", true );
 
         String logContent = FileUtils.fileRead( logFile );
-        assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
+        assertTrue(
+                logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
 
 
@@ -122,7 +129,7 @@ public class ScriptRunnerTest
 
     private Map<String, ? extends Object> buildContext()
     {
-        Map<String, Object> context = new HashMap<String, Object>();
+        Map<String, Object> context = new HashMap<>();
         context.put( "foo", "bar" );
         return context;
     }

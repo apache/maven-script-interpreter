@@ -19,12 +19,14 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the Groovy interpreter facade.
@@ -32,28 +34,28 @@ import java.util.Map;
  * @author Benjamin Bentmann
  */
 public class GroovyScriptInterpreterTest
-    extends TestCase
 {
-
+    @Test
     public void testEvaluateScript()
         throws Exception
     {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-        assertEquals( Boolean.TRUE, interpreter.evaluateScript( "print \"Test\"\nreturn true", null, null,
-                                                                new PrintStream( out ) ) );
+        assertEquals( Boolean.TRUE,
+                interpreter.evaluateScript( "print \"Test\"\nreturn true", null, null, new PrintStream( out ) ) );
         assertEquals( "Test", out.toString() );
     }
 
+    @Test
     public void testEvaluateScriptVars()
         throws Exception
     {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put( "testVar", "data" );
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-        assertEquals( Boolean.TRUE, interpreter.evaluateScript( "print testVar\nreturn true", null, vars,
-                                                                new PrintStream( out ) ) );
+        assertEquals( Boolean.TRUE,
+                interpreter.evaluateScript( "print testVar\nreturn true", null, vars, new PrintStream( out ) ) );
         assertEquals( "data", out.toString() );
     }
 

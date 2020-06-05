@@ -79,11 +79,11 @@ public class ScriptRunner
             throw new IllegalArgumentException( "missing logger" );
         }
         this.log = log;
-        scriptInterpreters = new LinkedHashMap<String, ScriptInterpreter>();
+        scriptInterpreters = new LinkedHashMap<>();
         scriptInterpreters.put( "bsh", new BeanShellScriptInterpreter() );
         scriptInterpreters.put( "groovy", new GroovyScriptInterpreter() );
-        globalVariables = new HashMap<String, Object>();
-        classPath = new ArrayList<String>();
+        globalVariables = new HashMap<>();
+        classPath = new ArrayList<>();
     }
 
     public void addScriptInterpreter( String id, ScriptInterpreter scriptInterpreter )
@@ -122,7 +122,7 @@ public class ScriptRunner
      */
     public void setClassPath( List<String> classPath )
     {
-        this.classPath = ( classPath != null ) ? new ArrayList<String>( classPath ) : new ArrayList<String>();
+        this.classPath = ( classPath != null ) ? new ArrayList<>( classPath ) : new ArrayList<String>();
     }
 
     /**
@@ -216,7 +216,7 @@ public class ScriptRunner
                              boolean failOnException )
         throws IOException, RunFailureException
     {
-        Map<String, Object> globalVariables = new HashMap<String, Object>( this.globalVariables );
+        Map<String, Object> globalVariables = new HashMap<>( this.globalVariables );
         globalVariables.put( "basedir", scriptFile.getParentFile() );
         globalVariables.put( "context", context );
 

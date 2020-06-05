@@ -19,12 +19,14 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the BeanShell interpreter facade.
@@ -32,28 +34,30 @@ import java.util.Map;
  * @author Benjamin Bentmann
  */
 public class BeanShellScriptInterpreterTest
-    extends TestCase
 {
-
+    @Test
     public void testEvaluateScript()
         throws Exception
     {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
-        assertEquals( Boolean.TRUE, interpreter.evaluateScript( "System.out.print(\"Test\"); return true;", null,
-                                                                null, new PrintStream( out ) ) );
+        assertEquals( Boolean.TRUE,
+                interpreter.evaluateScript( "System.out.print(\"Test\"); return true;", null, null,
+                        new PrintStream( out ) ) );
         assertEquals( "Test", out.toString() );
     }
 
+    @Test
     public void testEvaluateScriptVars()
         throws Exception
     {
-        Map<String, Object> vars = new HashMap<String, Object>();
+        Map<String, Object> vars = new HashMap<>();
         vars.put( "testVar", "data" );
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
-        assertEquals( Boolean.TRUE, interpreter.evaluateScript( "System.out.print(testVar); return true;", null,
-                                                                vars, new PrintStream( out ) ) );
+        assertEquals( Boolean.TRUE,
+                interpreter.evaluateScript( "System.out.print(testVar); return true;", null, vars,
+                        new PrintStream( out ) ) );
         assertEquals( "data", out.toString() );
     }
 
