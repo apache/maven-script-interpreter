@@ -23,7 +23,6 @@ import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.apache.tools.ant.AntClassLoader;
 import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.plexus.component.annotations.Component;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -36,8 +35,7 @@ import java.util.Map;
  * 
  * @author Benjamin Bentmann
  */
-@Component( role = ScriptInterpreter.class, hint = "groovy" )
-public class GroovyScriptInterpreter
+class GroovyScriptInterpreter
     implements ScriptInterpreter
 {
 

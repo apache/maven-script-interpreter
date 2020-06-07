@@ -30,15 +30,12 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.plexus.component.annotations.Component;
-
 /**
  * Provides a facade to evaluate BeanShell scripts.
  *
  * @author Benjamin Bentmann
  */
-@Component( role = ScriptInterpreter.class, hint = "bsh" )
-public class BeanShellScriptInterpreter
+class BeanShellScriptInterpreter
     implements ScriptInterpreter
 {
 
