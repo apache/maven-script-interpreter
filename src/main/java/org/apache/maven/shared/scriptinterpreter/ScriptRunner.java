@@ -239,23 +239,18 @@ public class ScriptRunner
         catch ( ScriptEvaluationException e )
         {
             Throwable t = ( e.getCause() != null ) ? e.getCause() : e;
-            String msg = ( t.getMessage() != null ) ? t.getMessage() : t.toString();
-            if ( LOG.isDebugEnabled() )
-            {
-                String errorMessage = "Error evaluating " + scriptDescription + " " + scriptFile.getPath() + ", " + t;
-                LOG.debug( errorMessage, t );
-            }
             if ( logger != null )
             {
                 t.printStackTrace( logger.getPrintStream() );
             }
+
             if ( failOnException )
             {
-                throw new RunFailureException( "The " + scriptDescription + " did not succeed. " + msg, stage );
+                throw new RunFailureException( "The " + scriptDescription + " did not succeed.", stage );
             }
             else
             {
-                throw new RunErrorException( "The " + scriptDescription + " did not succeed. " + msg, stage, t );
+                throw new RunErrorException( "The " + scriptDescription + " did not succeed.", stage, t );
             }
         }
 
