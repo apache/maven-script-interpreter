@@ -23,7 +23,7 @@
     <groupId>org.apache.maven.shared</groupId>
     <artifactId>maven-shared-components</artifactId>
     <version>34</version>
-    <relativePath></relativePath>
+    <relativePath />
   </parent>
 
   <artifactId>maven-script-interpreter</artifactId>
@@ -40,7 +40,7 @@
   </scm>
   <issueManagement>
     <system>jira</system>
-    <url>https://issues.apache.org/jira/browse/MSHARED/component/12326451</url>
+    <url>https://issues.apache.org/jira/browse/MSHARED</url>
   </issueManagement>
   <ciManagement>
     <system>Jenkins</system>
