@@ -76,7 +76,7 @@ ${project.name}
 
     ScriptRunner scriptRunner = new ScriptRunner( );
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                      new FileLogger( logFile ), "foo", true );
+                      new FileLogger( logFile ) );
 +---------
 
 * Mirror output from script interpreter
@@ -101,7 +101,7 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
 
       ScriptRunner scriptRunner = new ScriptRunner( );
       scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                        new FileLogger( logFile, new MyMirrorHandler() ), "foo", true );
+                        new FileLogger( logFile, new MyMirrorHandler() ) );
 
 +---------
 
@@ -119,9 +119,7 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
 
 +---------
 
-    SystemStreamLog systemStreamLog = new SystemStreamLog();
-
-    ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
+    ScriptRunner scriptRunner = new ScriptRunner( );
     scriptRunner.setGlobalVariable( name, value );
 
 +---------
@@ -148,12 +146,11 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
   You can add some additional classpath entries for your script execution
 
 +---------
-    SystemStreamLog systemStreamLog = new SystemStreamLog();
 
     List<String> classpathEntries = list of jar paths
-    ScriptRunner scriptRunner = new ScriptRunner( systemStreamLog );
+    ScriptRunner scriptRunner = new ScriptRunner( );
     scriptRunner.setClassPath( classpathEntries );
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                      new FileLogger( logFile ), "foo", true );
+                      new FileLogger( logFile ) );
 +---------
 
