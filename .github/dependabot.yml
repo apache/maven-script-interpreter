@@ -28,7 +28,7 @@ updates:
   ignore:
     - dependency-name: org.codehaus.groovy:groovy
       versions:
-      - ">= 3.0"
+      - ">= 2.5"
     - dependency-name: org.apache.ant:ant
       versions:
       - ">= 1.10"
