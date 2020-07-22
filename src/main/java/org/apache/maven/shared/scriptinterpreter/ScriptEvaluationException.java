@@ -44,4 +44,14 @@ public class ScriptEvaluationException
         super( cause );
     }
 
+    /**
+     * Creates a new exception with the specified message.
+     *
+     * @param message The message with description of exception.
+     */
+    public ScriptEvaluationException( String message )
+    {
+        super( message );
+    }
+
 }

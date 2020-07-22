@@ -51,7 +51,7 @@ public class ScriptRunnerTest
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
             scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify",
-                    buildContext(), fileLogger, "foo", true );
+                    buildContext(), fileLogger );
         }
 
         String logContent = FileUtils.fileRead( logFile );
@@ -79,16 +79,47 @@ public class ScriptRunnerTest
         {
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "failed",
-                    buildContext(), fileLogger, "foo", false );
+                    buildContext(), fileLogger );
         }
         catch ( Exception e )
         {
             catchedException = e;
         }
 
-        assertTrue( catchedException instanceof RunErrorException );
+        assertTrue( catchedException instanceof ScriptEvaluationException );
         String logContent = FileUtils.fileRead( logFile );
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/failed.bsh" ).getPath() ) );
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
+    }
+
+    @Test
+    public void noReturnFromBeanshellShouldThrowException() throws Exception
+    {
+        File logFile = new File( "target/build.log" );
+        if ( logFile.exists() )
+        {
+            logFile.delete();
+        }
+
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        Exception catchedException = null;
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ),
+                    "no-return", buildContext(), fileLogger );
+        }
+        catch ( Exception e )
+        {
+            catchedException = e;
+        }
+
+        assertTrue( catchedException instanceof ScriptEvaluationException );
+        assertEquals( "The test returned null.", catchedException.getMessage() );
+        String logContent = FileUtils.fileRead( logFile );
+        assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/no-return.bsh" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
@@ -108,7 +139,7 @@ public class ScriptRunnerTest
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
             scriptRunner.run( "test", new File( "src/test/resources/bsh-test/verify.bsh" ),
-                    buildContext(), fileLogger, "foo", true );
+                    buildContext(), fileLogger );
         }
 
         String logContent = FileUtils.fileRead( logFile );
@@ -134,7 +165,7 @@ public class ScriptRunnerTest
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.setGlobalVariable( "globalVar", "Yeah baby it's rocks" );
             scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ), "verify",
-                    buildContext(), fileLogger, "foo", true );
+                    buildContext(), fileLogger );
         }
 
         String logContent = FileUtils.fileRead( logFile );
@@ -163,16 +194,47 @@ public class ScriptRunnerTest
         {
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ), "failed",
-                    buildContext(), fileLogger, "foo", true );
+                    buildContext(), fileLogger );
         }
         catch ( Exception e )
         {
             catchedException = e;
         }
 
-        assertTrue( catchedException instanceof RunFailureException );
+        assertTrue( catchedException instanceof ScriptEvaluationException );
         String logContent = FileUtils.fileRead( logFile );
         assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/failed.groovy" ).getPath() ) );
+        assertEquals( logContent, mirrorHandler.getLoggedMessage() );
+    }
+
+    @Test
+    public void groovyReturnedFalseShouldThrowException() throws Exception
+    {
+        File logFile = new File( "target/build.log" );
+        if ( logFile.exists() )
+        {
+            logFile.delete();
+        }
+
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        Exception catchedException = null;
+
+        try ( FileLogger fileLogger = new FileLogger( logFile, mirrorHandler ) )
+        {
+            ScriptRunner scriptRunner = new ScriptRunner();
+            scriptRunner.run( "test", new File( "src/test/resources/groovy-test" ),
+                    "return-false", buildContext(), fileLogger );
+        }
+        catch ( Exception e )
+        {
+            catchedException = e;
+        }
+
+        assertTrue( catchedException instanceof ScriptEvaluationException );
+        assertEquals( "The test returned false.", catchedException.getMessage() );
+        String logContent = FileUtils.fileRead( logFile );
+        assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/return-false.groovy" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
@@ -191,7 +253,7 @@ public class ScriptRunnerTest
         {
             ScriptRunner scriptRunner = new ScriptRunner();
             scriptRunner.run( "test", new File( "src/test/resources/groovy-test/verify.groovy" ),
-                    buildContext(), fileLogger, "foo", true );
+                    buildContext(), fileLogger );
         }
 
         String logContent = FileUtils.fileRead( logFile );
@@ -201,7 +263,7 @@ public class ScriptRunnerTest
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
 
-    private Map<String, ? extends Object> buildContext()
+    private Map<String, ?> buildContext()
     {
         Map<String, Object> context = new HashMap<>();
         context.put( "foo", "bar" );
