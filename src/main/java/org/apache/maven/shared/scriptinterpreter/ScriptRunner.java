@@ -128,11 +128,11 @@ public class ScriptRunner
      * @param context The key-value storage used to share information between hook scripts, may be <code>null</code>.
      * @param logger The logger to redirect the script output to, may be <code>null</code> to use stdout/stderr.
      * @throws IOException If an I/O error occurred while reading the script file.
-     * @throws ScriptEvaluationException If the script did not return <code>true</code> of threw an exception.
+     * @throws ScriptException If the script did not return <code>true</code> of threw an exception.
      */
     public void run( final String scriptDescription, final File basedir, final String relativeScriptPath,
                      final Map<String, ?> context, final ExecutionLogger logger )
-            throws IOException, ScriptEvaluationException
+            throws IOException, ScriptException
     {
         if ( relativeScriptPath == null )
         {
@@ -163,11 +163,11 @@ public class ScriptRunner
      * @param context The key-value storage used to share information between hook scripts, may be <code>null</code>.
      * @param logger The logger to redirect the script output to, may be <code>null</code> to use stdout/stderr.
      * @throws IOException         If an I/O error occurred while reading the script file.
-     * @throws ScriptEvaluationException If the script did not return <code>true</code> of threw an exception.
+     * @throws ScriptException If the script did not return <code>true</code> of threw an exception.
      */
     public void run( final String scriptDescription, File scriptFile, final Map<String, ?> context,
                      final ExecutionLogger logger )
-            throws IOException, ScriptEvaluationException
+            throws IOException, ScriptException
     {
 
         if ( !scriptFile.exists() )
@@ -183,7 +183,7 @@ public class ScriptRunner
 
     private void executeRun( final String scriptDescription, File scriptFile,
                              final Map<String, ?> context, final ExecutionLogger logger )
-            throws IOException, ScriptEvaluationException
+            throws IOException, ScriptException
     {
         ScriptInterpreter interpreter = getInterpreter( scriptFile );
         if ( LOG.isDebugEnabled() )
@@ -235,9 +235,9 @@ public class ScriptRunner
             throw e;
         }
 
-        if ( !Boolean.parseBoolean( String.valueOf( result ) ) )
+        if ( !( result == null || Boolean.parseBoolean( String.valueOf( result ) ) ) )
         {
-            throw new ScriptEvaluationException( "The " + scriptDescription + " returned " + result + "." );
+            throw new ScriptReturnException( "The " + scriptDescription + " returned " + result + ".", result );
         }
     }
 

@@ -20,32 +20,30 @@ package org.apache.maven.shared.scriptinterpreter;
  */
 
 /**
- * Signals an error during parsing/evaluation of a script. This can either be a syntax error in the script itself or an
- * exception triggered by the methods it invoked.
- * 
- * @author Benjamin Bentmann
+ * Signals an invalid value returned from script execution.
+ *
+ * @author Slawomir Jaranowski
  */
-public class ScriptEvaluationException
-    extends ScriptException
+public class ScriptReturnException extends ScriptException
 {
 
-    /**
-     * The serial version identifier for this class.
-     */
-    private static final long serialVersionUID = 199336743291078393L;
+    private static final long serialVersionUID = -4705573157701206786L;
 
-    /**
-     * Creates a new exception with the specified cause.
-     * 
-     * @param cause The cause, may be <code>null</code>.
-     */
-    ScriptEvaluationException( Throwable cause )
+    private final Object result;
+
+    ScriptReturnException( String message, Object result )
     {
-        super( cause );
+        super( message );
+        this.result = result;
     }
 
-    public ScriptEvaluationException( String message, Throwable cause )
+    /**
+     * Retrieve result returned by script.
+     *
+     * @return script result.
+     */
+    public Object getResult()
     {
-        super( message, cause );
+        return result;
     }
 }
