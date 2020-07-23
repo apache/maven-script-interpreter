@@ -22,6 +22,7 @@ package org.apache.maven.shared.scriptinterpreter;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.runtime.powerassert.PowerAssertionError;
 import org.codehaus.groovy.tools.RootLoader;
 
 import java.io.File;
@@ -79,6 +80,10 @@ class GroovyScriptInterpreter
             catch ( ThreadDeath e )
             {
                 throw e;
+            }
+            catch ( PowerAssertionError e )
+            {
+                throw new ScriptEvaluationException( "Assertion Error", e );
             }
             catch ( Throwable e )
             {
