@@ -19,10 +19,10 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import org.apache.maven.shared.utils.io.FileUtils;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +55,7 @@ public class ScriptRunnerTest
                     buildContext(), fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/verify.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
         assertTrue( logContent.contains( "globalVar=Yeah baby it's rocks" ) );
@@ -81,7 +81,7 @@ public class ScriptRunnerTest
                     "return-null", null, fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/return-null.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "ok with null result" ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
@@ -112,7 +112,7 @@ public class ScriptRunnerTest
         }
 
         assertNotNull( catchedException );
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/failed.bsh" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
@@ -143,7 +143,7 @@ public class ScriptRunnerTest
 
         assertEquals( "Not true value", catchedException.getResult() );
         assertEquals( "The test returned Not true value.", catchedException.getMessage() );
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/return-not-true.bsh" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
@@ -168,7 +168,7 @@ public class ScriptRunnerTest
                     buildContext(), fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/bsh-test/verify.bsh" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
 
@@ -194,7 +194,7 @@ public class ScriptRunnerTest
                     buildContext(), fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue(
                 logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
@@ -222,7 +222,7 @@ public class ScriptRunnerTest
                     "return-null", null, fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue(
                 logContent.contains( new File( "src/test/resources/groovy-test/return-null.groovy" ).getPath() ) );
         assertTrue( logContent.contains( "ok with null result" ) );
@@ -254,7 +254,7 @@ public class ScriptRunnerTest
         }
 
         assertNotNull( catchedException );
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/failed.groovy" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
@@ -285,7 +285,7 @@ public class ScriptRunnerTest
 
         assertEquals( false, catchedException.getResult() );
         assertEquals( "The test returned false.", catchedException.getMessage() );
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/return-false.groovy" ).getPath() ) );
         assertEquals( logContent, mirrorHandler.getLoggedMessage() );
     }
@@ -308,7 +308,7 @@ public class ScriptRunnerTest
                     buildContext(), fileLogger );
         }
 
-        String logContent = FileUtils.fileRead( logFile );
+        String logContent = new String( Files.readAllBytes(logFile.toPath()));
         assertTrue( logContent.contains( new File( "src/test/resources/groovy-test/verify.groovy" ).getPath() ) );
         assertTrue( logContent.contains( "foo=bar" ) );
 

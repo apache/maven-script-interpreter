@@ -19,11 +19,11 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import org.apache.maven.shared.utils.io.FileUtils;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -99,7 +99,7 @@ public class FileLoggerTest
         }
 
         assertTrue( outputFile.exists() );
-        assertEquals( EXPECTED_LOG, FileUtils.fileRead( outputFile ) );
+        assertEquals( EXPECTED_LOG, new String( Files.readAllBytes(outputFile.toPath())) );
     }
 
     @Test
@@ -124,6 +124,6 @@ public class FileLoggerTest
         assertEquals( EXPECTED_LOG, mirrorHandler.getLoggedMessage() );
 
         assertTrue( outputFile.exists() );
-        assertEquals( EXPECTED_LOG, FileUtils.fileRead( outputFile ) );
+        assertEquals( EXPECTED_LOG, new String( Files.readAllBytes(outputFile.toPath())) );
     }
 }

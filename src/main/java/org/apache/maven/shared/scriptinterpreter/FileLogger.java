@@ -19,8 +19,6 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import org.apache.maven.shared.utils.io.IOUtil;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -128,10 +126,10 @@ public class FileLogger implements ExecutionLogger, AutoCloseable
         if ( stream != null )
         {
             stream.flush();
+            stream.close();
+            stream = null;
         }
-
-        IOUtil.close( stream );
-    }
+   }
 
     private static class MirrorStreamWrapper extends OutputStream
     {

@@ -19,14 +19,14 @@ package org.apache.maven.shared.scriptinterpreter;
  * under the License.
  */
 
-import org.apache.maven.shared.utils.StringUtils;
-import org.apache.maven.shared.utils.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -115,7 +115,7 @@ public class ScriptRunner
      */
     public void setScriptEncoding( String encoding )
     {
-        this.encoding = StringUtils.isNotEmpty( encoding ) ? encoding : null;
+        this.encoding = ( encoding != null && encoding.length() > 0 ) ? encoding : null;
     }
 
     /**
@@ -150,7 +150,7 @@ public class ScriptRunner
         }
 
         LOG.info( "run {} {}.{}",
-                scriptDescription, relativeScriptPath, FileUtils.extension( scriptFile.getAbsolutePath() ) );
+                scriptDescription, relativeScriptPath, FilenameUtils.getExtension( scriptFile.getAbsolutePath() ) );
 
         executeRun( scriptDescription, scriptFile, context, logger );
     }
@@ -196,7 +196,15 @@ public class ScriptRunner
         String script;
         try
         {
-            script = FileUtils.fileRead( scriptFile, encoding );
+            byte[] bytes = Files.readAllBytes( scriptFile.toPath() );
+            if ( encoding != null )
+            {
+                script = new String( bytes, encoding );
+            }
+            else
+            {
+                script = new String( bytes );
+            }
         }
         catch ( IOException e )
         {
@@ -275,7 +283,7 @@ public class ScriptRunner
      */
     private ScriptInterpreter getInterpreter( File scriptFile )
     {
-        String ext = FileUtils.extension( scriptFile.getName() ).toLowerCase( Locale.ENGLISH );
+        String ext = FilenameUtils.getExtension( scriptFile.getName() ).toLowerCase( Locale.ENGLISH );
         ScriptInterpreter interpreter = scriptInterpreters.get( ext );
         if ( interpreter == null )
         {
