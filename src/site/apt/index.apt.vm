@@ -40,6 +40,20 @@ ${project.name}
     </dependency>
 +---------
 
+  <<<maven-script-interpreter>>> has dependency only to core interpreters library,
+  all specific extensions should be added in your project.
+
+  For example, if you want to use {{{https://docs.groovy-lang.org/latest/html/documentation/grape.html}<<Grape>>}}
+  in a <<Groovy>> script, you must add a dependency to Ivy in your project or in the plugin that will invoke the script:
+
++---------
+    <dependency>
+      <groupId>org.apache.ivy</groupId>
+      <artifactId>ivy</artifactId>
+      <version>...</version>
+    </dependency>
++---------
+
 * Using ScriptInterpreter
 
 ** Interpret BeanShell script
