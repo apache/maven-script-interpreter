@@ -40,51 +40,49 @@ ${project.name}
     </dependency>
 +---------
 
-* Interpret BeanShell script
+* Using ScriptInterpreter
+
+** Interpret BeanShell script
 
 +---------
-
     ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interpreter.evaluateScript( script content, extra classPath entries,
-                              Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
-    out.toString() returns script output
-
+                                Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
 +---------
 
-* Interpret a Groovy script
+    <<<out.toString()>>> returns script output.
+
+** Interpret a Groovy script
 
 +---------
-
     ScriptInterpreter interpreter = new GroovyScriptInterpreter();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interpreter.evaluateScript( script content, extra classPath entries,
-                              Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
-    out.toString() returns script output
-
+                                Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
 +---------
+
+    <<<out.toString()>>> returns script output.
 
 * Using ScriptRunner
 
-  ScriptRunner class will detect the script file to run based on supported extensions (.bsh,.groovy).
+  <<<ScriptRunner>>> class will detect the script file to run based on supported extensions (<<<.bsh>>>, <<<.groovy>>>).
 
   This class will search in the provided directory the script with the provided fileName and the supported extensions.
 
-  See {{{./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html}javadoc}} for run method.
+  See {{{./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html}javadoc}} for <<<run(...)>>> methods.
 
 +---------
-
-    ScriptRunner scriptRunner = new ScriptRunner( );
+    ScriptRunner scriptRunner = new ScriptRunner();
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
                       new FileLogger( logFile ) );
 +---------
 
 * Mirror output from script interpreter
 
-  In order to do something more with script output, eg. log by your application you must implement FileLoggerMirrorHandler
+  In order to do something more with script output, eg. log by your application you must implement <<<FileLoggerMirrorHandler>>>
 
 +---------
-
 class MyMirrorHandler implements FileLoggerMirrorHandler
 {
     void consumeOutput( String message )
@@ -92,36 +90,31 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
         // this method is invoked every time when flush occurs on the underlying stream.
     }
 }
-
 +---------
 
   Now use it:
 
 +---------
-
-      ScriptRunner scriptRunner = new ScriptRunner( );
+      ScriptRunner scriptRunner = new ScriptRunner();
       scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
                         new FileLogger( logFile, new MyMirrorHandler() ) );
-
 +---------
 
 ** Global variables
 
   Your scripts will have by default two global variables:
 
-  * basedir: the base directory of your script
+  * <<<basedir>>>: the base directory of your script
 
-  * context: the build context (see below)
+  * <<<context>>>: the build context (see below)
 
   []
 
    You can add more global variables as it.
 
 +---------
-
-    ScriptRunner scriptRunner = new ScriptRunner( );
+    ScriptRunner scriptRunner = new ScriptRunner();
     scriptRunner.setGlobalVariable( name, value );
-
 +---------
 
 ** Build context
@@ -158,7 +151,7 @@ private Map<String, Object> buildContext()
 +---------
 
     List<String> classpathEntries = list of jar paths
-    ScriptRunner scriptRunner = new ScriptRunner( );
+    ScriptRunner scriptRunner = new ScriptRunner();
     scriptRunner.setClassPath( classpathEntries );
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
                       new FileLogger( logFile ) );
