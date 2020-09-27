@@ -40,7 +40,7 @@ ${project.name}
     </dependency>
 +---------
 
-* Interpret beanshell script
+* Interpret BeanShell script
 
 +---------
 
@@ -52,7 +52,7 @@ ${project.name}
 
 +---------
 
-* Interpret a groovy script
+* Interpret a Groovy script
 
 +---------
 
@@ -126,18 +126,28 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
 
 ** Build context
 
-  You can pass some values to your script using a execution context which have the type <<<Map<String, ? extends Object> context>>>.
+  You can pass some values to your script using an execution context which have the type <<<Map<String, ? extends Object> context>>>:
 
 +---------
+private Map<String, Object> buildContext()
+{
     Map<String, Object> context = new HashMap<String, Object>();
     context.put( "foo", "bar" );
     return context;
+}
++---------
 
+  Then values are available in scripts context:
+
++---------
     // in your bsh script
     String value = context.get( "foo" );
++---------
+
     value will be "bar"
 
-    // in your groovy script
++---------
+    // in your Groovy script
     context.get("foo")
 +---------
 
@@ -153,4 +163,3 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
     scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
                       new FileLogger( logFile ) );
 +---------
-
