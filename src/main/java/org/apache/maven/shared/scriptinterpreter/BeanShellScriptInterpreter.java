@@ -94,12 +94,11 @@ class BeanShellScriptInterpreter
 
             if ( globalVariables != null )
             {
-                for ( String variable : globalVariables.keySet() )
+                for ( Map.Entry<String, ?> entry : globalVariables.entrySet() )
                 {
-                    Object value = globalVariables.get( variable );
                     try
                     {
-                        engine.set( variable, value );
+                        engine.set( entry.getKey(), entry.getValue() );
                     }
                     catch ( EvalError e )
                     {

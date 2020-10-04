@@ -67,7 +67,7 @@ public class ScriptRunner
     private String encoding;
 
     /**
-     * Creates a new script runner.
+     * Creates a new script runner with BSH and Groovy interpreters.
      */
     public ScriptRunner()
     {
@@ -78,6 +78,12 @@ public class ScriptRunner
         classPath = new ArrayList<>();
     }
 
+    /**
+     * Add new script Interpreter
+     *
+     * @param id The Id of interpreter
+     * @param scriptInterpreter the Script Interpreter implementation
+     */
     public void addScriptInterpreter( String id, ScriptInterpreter scriptInterpreter )
     {
         scriptInterpreters.put( id, scriptInterpreter );

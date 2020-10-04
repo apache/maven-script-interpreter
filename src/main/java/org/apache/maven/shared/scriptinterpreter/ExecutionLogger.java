@@ -22,20 +22,22 @@ package org.apache.maven.shared.scriptinterpreter;
 import java.io.PrintStream;
 
 /**
+ * <p>ExecutionLogger interface.</p>
+ *
  * @author Olivier Lamy
  */
 public interface ExecutionLogger
 {
     /**
-     * The stream which will catch the output of the {@link ScriptRunner}.
-     * 
+     * The stream which will catch the output of the {@link org.apache.maven.shared.scriptinterpreter.ScriptRunner}.
+     *
      * @return the output stream
      */
     PrintStream getPrintStream();
 
     /**
      * Consume logging from this component.
-     * 
+     *
      * @param line the line to consume
      */
     void consumeLine( String line );
