@@ -21,8 +21,9 @@ package org.apache.maven.shared.scriptinterpreter;
 
 /**
  * Common errors during script running.
- * 
+ *
  * @author Slawomir Jaranowski
+ * @since 1.3
  */
 public class ScriptException
     extends Exception

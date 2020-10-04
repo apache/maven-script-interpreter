@@ -41,9 +41,7 @@ class GroovyScriptInterpreter
     implements ScriptInterpreter
 {
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     public Object evaluateScript( String script, List<String> classPath, Map<String, ? extends Object> globalVariables,
                                   PrintStream scriptOutput )

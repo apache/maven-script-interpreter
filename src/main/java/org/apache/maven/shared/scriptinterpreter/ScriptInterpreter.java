@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Defines a simple abstraction used to plug-in several script interpreters for the pre-/post-build-hooks. Each
  * interpreter implementation should be stateless and support reuse.
- * 
+ *
  * @author Benjamin Bentmann
  */
 public interface ScriptInterpreter
@@ -34,7 +34,7 @@ public interface ScriptInterpreter
 
     /**
      * Evaluates the specified script.
-     * 
+     *
      * @param script The script contents to evaluate, must not be <code>null</code>.
      * @param classPath The additional class path for the script interpreter, may be <code>null</code> or empty if only
      *            the plugin realm should be used for the script evaluation. If specified, this class path will precede
