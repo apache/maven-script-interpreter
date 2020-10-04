@@ -23,12 +23,15 @@ package org.apache.maven.shared.scriptinterpreter;
  * Signals an invalid value returned from script execution.
  *
  * @author Slawomir Jaranowski
+ * @since 1.3
  */
 public class ScriptReturnException extends ScriptException
 {
 
     private static final long serialVersionUID = -4705573157701206786L;
-
+    /**
+     * Result
+     */
     private final Object result;
 
     /**

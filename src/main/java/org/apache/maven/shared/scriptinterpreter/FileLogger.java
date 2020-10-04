@@ -26,6 +26,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 /**
+ * <p>FileLogger class.</p>
+ *
  */
 public class FileLogger implements ExecutionLogger, AutoCloseable
 {

@@ -21,6 +21,8 @@ package org.apache.maven.shared.scriptinterpreter;
 
 /**
  * Handle output form interpreter.
+ *
+ * @since 1.3
  */
 public interface FileLoggerMirrorHandler
 {

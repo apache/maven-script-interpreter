@@ -22,7 +22,7 @@ package org.apache.maven.shared.scriptinterpreter;
 /**
  * Signals an error during parsing/evaluation of a script. This can either be a syntax error in the script itself or an
  * exception triggered by the methods it invoked.
- * 
+ *
  * @author Benjamin Bentmann
  */
 public class ScriptEvaluationException
@@ -49,6 +49,7 @@ public class ScriptEvaluationException
      *
      * @param message The message, may be <code>null</code>.
      * @param cause The cause, may be <code>null</code>.
+     * @since 1.3
      */
     public ScriptEvaluationException( String message, Throwable cause )
     {
