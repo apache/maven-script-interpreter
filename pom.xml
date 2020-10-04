@@ -57,6 +57,7 @@
     <javaVersion>7</javaVersion>
     <project.build.outputTimestamp>2020-04-04T09:03:59Z</project.build.outputTimestamp>
     <slf4j.version>1.7.30</slf4j.version>
+    <checkstyle.violation.ignore>None</checkstyle.violation.ignore>
   </properties>
 
   <dependencies>
@@ -100,4 +101,23 @@
 
   </dependencies>
 
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- remove with next parent upgrade -->
+        <plugin>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.0.0-M3</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>
