@@ -31,6 +31,12 @@ public class ScriptReturnException extends ScriptException
 
     private final Object result;
 
+    /**
+     * Creates a new exception with the specified message and result.
+     *
+     * @param message The message, may be <code>null</code>.
+     * @param result The cause, may be <code>null</code>.
+     */
     ScriptReturnException( String message, Object result )
     {
         super( message );

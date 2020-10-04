@@ -44,6 +44,12 @@ public class ScriptEvaluationException
         super( cause );
     }
 
+    /**
+     * Creates a new exception with the specified message and cause.
+     *
+     * @param message The message, may be <code>null</code>.
+     * @param cause The cause, may be <code>null</code>.
+     */
     public ScriptEvaluationException( String message, Throwable cause )
     {
         super( message, cause );

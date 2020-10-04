@@ -29,6 +29,12 @@ public class ScriptException
 {
     private static final long serialVersionUID = 4553276474852776472L;
 
+    /**
+     * Creates a new exception with the specified message and cause.
+     *
+     * @param message The message, may be <code>null</code>.
+     * @param cause The cause, may be <code>null</code>.
+     */
     public ScriptException( String message, Throwable cause )
     {
         super( message, cause );
