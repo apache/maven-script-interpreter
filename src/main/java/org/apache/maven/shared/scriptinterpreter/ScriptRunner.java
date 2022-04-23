@@ -110,7 +110,7 @@ public class ScriptRunner
      */
     public void setClassPath( List<String> classPath )
     {
-        this.classPath = ( classPath != null ) ? new ArrayList<>( classPath ) : new ArrayList<String>();
+        this.classPath = ( classPath != null ) ? new ArrayList<>( classPath ) : new ArrayList<>();
     }
 
     /**

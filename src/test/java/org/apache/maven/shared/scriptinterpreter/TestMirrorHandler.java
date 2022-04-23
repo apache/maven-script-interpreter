@@ -29,7 +29,7 @@ class TestMirrorHandler implements FileLoggerMirrorHandler
 
     private StringBuilder loggedMessage;
 
-    public TestMirrorHandler() throws IOException
+    public TestMirrorHandler()
     {
         loggedMessage = new StringBuilder();
     }
