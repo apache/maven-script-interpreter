@@ -22,7 +22,8 @@ if ( !( basedir instanceof File ) )
     println "Global script variable not defined: basedir or not a File"
     throw new RuntimeException("Global script variable not defined: basedir or not a File");
 }
-assert (new File( basedir, "verify.groovy" ).exists())
+def verify = new File( basedir, "verify.groovy" )
+assert (verify.exists())
 
 if ( !( context instanceof Map ) )
 {
