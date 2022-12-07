@@ -78,6 +78,8 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
             }
         } catch (IOException e) {
             throw new ScriptEvaluationException(e);
+        } catch (Throwable e) {
+            throw new ScriptEvaluationException(e);
         } finally {
             System.setErr(origErr);
             System.setOut(origOut);
