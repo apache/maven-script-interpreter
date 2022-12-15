@@ -18,15 +18,16 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
-import bsh.Capabilities;
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.TargetError;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
+
+import bsh.Capabilities;
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.TargetError;
 
 /**
  * Provides a facade to evaluate BeanShell scripts.
