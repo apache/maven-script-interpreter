@@ -18,13 +18,14 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.tools.RootLoader;
 
