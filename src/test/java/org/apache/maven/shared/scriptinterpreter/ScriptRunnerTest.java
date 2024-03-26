@@ -20,10 +20,14 @@ package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,17 +38,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class ScriptRunnerTest {
 
+    @TempDir
+    private File tempDir;
+
     @Test
     public void testBeanshell() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.setGlobalVariable("globalVar", "Yeah baby it's rocks");
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(), fileLogger);
         }
@@ -59,15 +63,12 @@ public class ScriptRunnerTest {
 
     @Test
     public void beanshellReturnedNullShouldBeOk() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-null", null, fileLogger);
         }
 
@@ -79,17 +80,14 @@ public class ScriptRunnerTest {
 
     @Test
     public void failedBeanshellShouldCreateProperLogsMessage() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         Exception catchedException = null;
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "failed", buildContext(), fileLogger);
         } catch (ScriptEvaluationException e) {
             catchedException = e;
@@ -103,17 +101,14 @@ public class ScriptRunnerTest {
 
     @Test
     public void beanshellReturnedNotTrueShouldThrowException() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         ScriptReturnException catchedException = null;
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-not-true", null, fileLogger);
         } catch (ScriptReturnException e) {
             catchedException = e;
@@ -128,15 +123,12 @@ public class ScriptRunnerTest {
 
     @Test
     public void testBeanshellWithFile() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.setGlobalVariable("globalVar", "Yeah baby it's rocks");
             scriptRunner.run("test", new File("src/test/resources/bsh-test/verify.bsh"), buildContext(), fileLogger);
         }
@@ -150,15 +142,12 @@ public class ScriptRunnerTest {
 
     @Test
     public void testGroovy() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.setGlobalVariable("globalVar", "Yeah baby it's rocks");
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "verify", buildContext(), fileLogger);
         }
@@ -173,15 +162,12 @@ public class ScriptRunnerTest {
 
     @Test
     public void groovyReturnedNullShouldBeOk() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.setGlobalVariable("globalVar", "Yeah baby it's rocks");
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "return-null", null, fileLogger);
         }
@@ -194,17 +180,14 @@ public class ScriptRunnerTest {
 
     @Test
     public void failedGroovyShouldCreateProperLogsMessage() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         Exception catchedException = null;
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "failed", buildContext(), fileLogger);
         } catch (ScriptEvaluationException e) {
             catchedException = e;
@@ -218,17 +201,14 @@ public class ScriptRunnerTest {
 
     @Test
     public void groovyReturnedFalseShouldThrowException() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         ScriptReturnException catchedException = null;
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run(
                     "test", new File("src/test/resources/groovy-test"), "return-false", buildContext(), fileLogger);
         } catch (ScriptReturnException e) {
@@ -244,15 +224,12 @@ public class ScriptRunnerTest {
 
     @Test
     public void testGroovyWithFile() throws Exception {
-        File logFile = new File("target/build.log");
-        if (logFile.exists()) {
-            logFile.delete();
-        }
+        File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
-        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler)) {
-            ScriptRunner scriptRunner = new ScriptRunner();
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run(
                     "test", new File("src/test/resources/groovy-test/verify.groovy"), buildContext(), fileLogger);
         }
@@ -262,6 +239,30 @@ public class ScriptRunnerTest {
         assertTrue(logContent.contains("foo=bar"));
 
         assertEquals(logContent, mirrorHandler.getLoggedMessage());
+    }
+
+    @ValueSource(strings = {"bsh", "groovy"})
+    @ParameterizedTest
+    void theSameClassloaderShouldBeUsed(String scriptType) throws Exception {
+
+        Map<String, ?> context = buildContext();
+        File logFile = new File(tempDir, "build.log");
+        File basedir = new File(String.format("target/test-classes/%s-test", scriptType));
+
+        try (FileLogger logger = new FileLogger(logFile);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.setClassPath(
+                    Arrays.asList("target/dependency/slf4j-api.jar", "target/dependency/slf4j-simple.jar"));
+
+            scriptRunner.run("test classpath 1", basedir, "class-path1", context, logger);
+            assertNotNull(context.get("logger"));
+
+            scriptRunner.run("test classpath 2", basedir, "class-path2", context, logger);
+        }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        assertTrue(logContent.contains("INFO test - Test log 1"));
+        assertTrue(logContent.contains("INFO test - Test log 2"));
     }
 
     private Map<String, ?> buildContext() {

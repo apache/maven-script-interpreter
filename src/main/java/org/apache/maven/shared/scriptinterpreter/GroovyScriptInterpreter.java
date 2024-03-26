@@ -19,7 +19,10 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -36,29 +39,40 @@ import org.codehaus.groovy.tools.RootLoader;
  */
 class GroovyScriptInterpreter implements ScriptInterpreter {
 
-    /** {@inheritDoc} */
+    private final RootLoader childFirstLoader =
+            new RootLoader(new URL[] {}, Thread.currentThread().getContextClassLoader());
+
     @Override
-    public Object evaluateScript(
-            String script,
-            List<String> classPath,
-            Map<String, ? extends Object> globalVariables,
-            PrintStream scriptOutput)
+    public void setClassPath(List<String> classPath) {
+        if (classPath == null || classPath.isEmpty()) {
+            return;
+        }
+
+        classPath.stream().map(this::toUrl).forEach(childFirstLoader::addURL);
+    }
+
+    private URL toUrl(String path) {
+        try {
+            return new File(path).toURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException {
         PrintStream origOut = System.out;
         PrintStream origErr = System.err;
 
-        try (RootLoader childFirstLoader =
-                new RootLoader(new URL[] {}, getClass().getClassLoader())) {
+        try {
 
             if (scriptOutput != null) {
                 System.setErr(scriptOutput);
                 System.setOut(scriptOutput);
-            }
-
-            if (classPath != null && !classPath.isEmpty()) {
-                for (String path : classPath) {
-                    childFirstLoader.addURL(new File(path).toURI().toURL());
-                }
             }
 
             GroovyShell interpreter = new GroovyShell(
@@ -73,5 +87,10 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
             System.setErr(origErr);
             System.setOut(origOut);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        childFirstLoader.close();
     }
 }
