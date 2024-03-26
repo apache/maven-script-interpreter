@@ -33,11 +33,11 @@ ${project.name}
 * Dependency declaration
 
 +---------
-    <dependency>
-      <groupId>org.apache.maven.shared</groupId>
-      <artifactId>maven-script-interpreter</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+<dependency>
+  <groupId>org.apache.maven.shared</groupId>
+  <artifactId>maven-script-interpreter</artifactId>
+  <version>${project.version}</version>
+</dependency>
 +---------
 
   <<<maven-script-interpreter>>> has dependency only to core interpreters library,
@@ -47,36 +47,12 @@ ${project.name}
   in a <<Groovy>> script, you must add a dependency to Ivy in your project or in the plugin that will invoke the script:
 
 +---------
-    <dependency>
-      <groupId>org.apache.ivy</groupId>
-      <artifactId>ivy</artifactId>
-      <version>...</version>
-    </dependency>
+<dependency>
+  <groupId>org.apache.ivy</groupId>
+  <artifactId>ivy</artifactId>
+  <version>...</version>
+</dependency>
 +---------
-
-* Using ScriptInterpreter
-
-** Interpret BeanShell script
-
-+---------
-    ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interpreter.evaluateScript( script content, extra classPath entries,
-                                Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
-+---------
-
-    <<<out.toString()>>> returns script output.
-
-** Interpret a Groovy script
-
-+---------
-    ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interpreter.evaluateScript( script content, extra classPath entries,
-                                Map<String, ? extends Object> globalVariables, new PrintStream( out ) );
-+---------
-
-    <<<out.toString()>>> returns script output.
 
 * Using ScriptRunner
 
@@ -87,9 +63,10 @@ ${project.name}
   See {{{./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html}javadoc}} for <<<run(...)>>> methods.
 
 +---------
-    ScriptRunner scriptRunner = new ScriptRunner();
-    scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                      new FileLogger( logFile ) );
+try (ScriptRunner scriptRunner = new ScriptRunner()) {
+    scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
+            new FileLogger(logFile));
+}
 +---------
 
 * Mirror output from script interpreter
@@ -97,10 +74,8 @@ ${project.name}
   In order to do something more with script output, eg. log by your application you must implement <<<FileLoggerMirrorHandler>>>
 
 +---------
-class MyMirrorHandler implements FileLoggerMirrorHandler
-{
-    void consumeOutput( String message )
-    {
+class MyMirrorHandler implements FileLoggerMirrorHandler {
+    void consumeOutput(String message) {
         // this method is invoked every time when flush occurs on the underlying stream.
     }
 }
@@ -109,9 +84,10 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
   Now use it:
 
 +---------
-      ScriptRunner scriptRunner = new ScriptRunner();
-      scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                        new FileLogger( logFile, new MyMirrorHandler() ) );
+try (ScriptRunner scriptRunner = new ScriptRunner()) {
+    scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
+            new FileLogger(logFile, new MyMirrorHandler()));
+}
 +---------
 
 ** Global variables
@@ -127,8 +103,10 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
    You can add more global variables as it.
 
 +---------
-    ScriptRunner scriptRunner = new ScriptRunner();
+try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.setGlobalVariable( name, value );
+    ...
+}
 +---------
 
 ** Build context
@@ -136,10 +114,9 @@ class MyMirrorHandler implements FileLoggerMirrorHandler
   You can pass some values to your script using an execution context which have the type <<<Map<String, ? extends Object> context>>>:
 
 +---------
-private Map<String, Object> buildContext()
-{
+private Map<String, Object> buildContext() {
     Map<String, Object> context = new HashMap<String, Object>();
-    context.put( "foo", "bar" );
+    context.put("foo", "bar");
     return context;
 }
 +---------
@@ -147,26 +124,27 @@ private Map<String, Object> buildContext()
   Then values are available in scripts context:
 
 +---------
-    // in your bsh script
-    String value = context.get( "foo" );
+// in your bsh script
+String value = context.get( "foo" );
 +---------
 
     value will be "bar"
 
 +---------
-    // in your Groovy script
-    context.get("foo")
+// in your Groovy script
+context.get("foo")
 +---------
 
-** Additionnal classpath entries
+** Additional classpath entries
 
   You can add some additional classpath entries for your script execution
 
 +---------
+List<String> classpathEntries = list of jar paths
 
-    List<String> classpathEntries = list of jar paths
-    ScriptRunner scriptRunner = new ScriptRunner();
+try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.setClassPath( classpathEntries );
-    scriptRunner.run( "test", new File( "src/test/resources/bsh-test" ), "verify", buildContext(),
-                      new FileLogger( logFile ) );
+    scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
+            new FileLogger(logFile));
+ }
 +---------

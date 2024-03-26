@@ -19,14 +19,13 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 
 /**
  * <p>FileLogger class.</p>
- *
  */
 public class FileLogger implements ExecutionLogger, AutoCloseable {
 
@@ -53,7 +52,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     /**
      * Creates a new logger that writes to the specified file and optionally mirrors messages.
      *
-     * @param outputFile The path to the output file, if null all message will be discarded.
+     * @param outputFile    The path to the output file, if null all message will be discarded.
      * @param mirrorHandler The class which handle mirrored message, can be <code>null</code>.
      * @throws java.io.IOException If the output file could not be created.
      */
@@ -64,7 +63,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
 
         if (outputFile != null) {
             outputFile.getParentFile().mkdirs();
-            outputStream = new FileOutputStream(outputFile);
+            outputStream = Files.newOutputStream(outputFile.toPath());
         } else {
             outputStream = new NullOutputStream();
         }
@@ -119,7 +118,8 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     }
 
     private static class MirrorStreamWrapper extends OutputStream {
-        private final OutputStream out;
+        private OutputStream out;
+
         private final FileLoggerMirrorHandler mirrorHandler;
 
         private StringBuilder lineBuffer;
@@ -162,6 +162,15 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
 
             // clear buffer
             lineBuffer = new StringBuilder();
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            if (out != null) {
+                out.close();
+                out = null;
+            }
         }
     }
 

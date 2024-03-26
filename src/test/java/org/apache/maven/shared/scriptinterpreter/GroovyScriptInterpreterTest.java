@@ -41,8 +41,7 @@ public class GroovyScriptInterpreterTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
         assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript("print \"Test\"\nreturn true", null, null, new PrintStream(out)));
+                Boolean.TRUE, interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
         assertEquals("Test", out.toString());
     }
 
@@ -55,7 +54,6 @@ public class GroovyScriptInterpreterTest {
                 Boolean.TRUE,
                 interpreter.evaluateScript(
                         "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
-                        null,
                         null,
                         new PrintStream(out)));
 
@@ -70,12 +68,12 @@ public class GroovyScriptInterpreterTest {
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
 
         List<String> classPath = Collections.singletonList(new File("src/test-class-path").getAbsolutePath());
+        interpreter.setClassPath(classPath);
 
         assertEquals(
                 Boolean.TRUE,
                 interpreter.evaluateScript(
                         "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
-                        classPath,
                         null,
                         new PrintStream(out)));
 
@@ -91,8 +89,7 @@ public class GroovyScriptInterpreterTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ScriptInterpreter interpreter = new GroovyScriptInterpreter();
         assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript("print testVar\nreturn true", null, vars, new PrintStream(out)));
+                Boolean.TRUE, interpreter.evaluateScript("print testVar\nreturn true", vars, new PrintStream(out)));
         assertEquals("data", out.toString());
     }
 }

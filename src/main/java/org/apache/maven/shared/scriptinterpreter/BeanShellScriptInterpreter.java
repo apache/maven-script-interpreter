@@ -21,6 +21,10 @@ package org.apache.maven.shared.scriptinterpreter;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Map;
 
@@ -36,13 +40,28 @@ import bsh.TargetError;
  */
 class BeanShellScriptInterpreter implements ScriptInterpreter {
 
-    /** {@inheritDoc} */
+    private URLClassLoader classLoader;
+
     @Override
-    public Object evaluateScript(
-            String script,
-            List<String> classPath,
-            Map<String, ? extends Object> globalVariables,
-            PrintStream scriptOutput)
+    public void setClassPath(List<String> classPath) {
+        if (classPath == null || classPath.isEmpty()) {
+            return;
+        }
+
+        URL[] urls = classPath.stream().map(this::toUrl).toArray(URL[]::new);
+        classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+    }
+
+    private URL toUrl(String path) {
+        try {
+            return new File(path).toURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException {
         PrintStream origOut = System.out;
         PrintStream origErr = System.err;
@@ -67,15 +86,8 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                 }
             }
 
-            if (classPath != null && !classPath.isEmpty()) {
-                for (String path : classPath) {
-                    try {
-                        engine.getClassManager()
-                                .addClassPath(new File(path).toURI().toURL());
-                    } catch (IOException e) {
-                        throw new RuntimeException("bad class path: " + path, e);
-                    }
-                }
+            if (classLoader != null) {
+                engine.setClassLoader(classLoader);
             }
 
             if (globalVariables != null) {
@@ -100,6 +112,13 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
         } finally {
             System.setErr(origErr);
             System.setOut(origOut);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (classLoader != null) {
+            classLoader.close();
         }
     }
 }

@@ -18,6 +18,7 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import java.io.Closeable;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
@@ -28,26 +29,29 @@ import java.util.Map;
  *
  * @author Benjamin Bentmann
  */
-public interface ScriptInterpreter {
+public interface ScriptInterpreter extends Closeable {
+
+    /**
+     * Set class path used by interpreted.
+     *
+     * @param classPath The additional class path for the script interpreter, may be <code>null</code> or empty if only
+     *                  the plugin realm should be used for the script evaluation. If specified, this class path will
+     *                  precede
+     *                  the artifacts from the plugin class path.
+     */
+    void setClassPath(List<String> classPath);
 
     /**
      * Evaluates the specified script.
      *
-     * @param script The script contents to evaluate, must not be <code>null</code>.
-     * @param classPath The additional class path for the script interpreter, may be <code>null</code> or empty if only
-     *            the plugin realm should be used for the script evaluation. If specified, this class path will precede
-     *            the artifacts from the plugin class path.
+     * @param script          The script contents to evaluate, must not be <code>null</code>.
      * @param globalVariables The global variables (as a mapping from variable name to value) to define for the script,
-     *            may be <code>null</code> if not used.
-     * @param scriptOutput A print stream to redirect any output from the script to, may be <code>null</code> to use
-     *            stdout/stderr.
+     *                        may be <code>null</code> if not used.
+     * @param scriptOutput    A print stream to redirect any output from the script to, may be <code>null</code> to use
+     *                        stdout/stderr.
      * @return The return value from the script, can be <code>null</code>
      * @throws ScriptEvaluationException If the script evaluation produced an error.
      */
-    Object evaluateScript(
-            String script,
-            List<String> classPath,
-            Map<String, ? extends Object> globalVariables,
-            PrintStream scriptOutput)
+    Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException;
 }

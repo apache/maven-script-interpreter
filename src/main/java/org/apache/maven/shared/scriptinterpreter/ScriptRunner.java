@@ -18,6 +18,7 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -38,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Benjamin Bentmann
  */
-public class ScriptRunner {
+public class ScriptRunner implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScriptRunner.class);
 
@@ -220,7 +221,8 @@ public class ScriptRunner {
             scriptVariables.put("basedir", scriptFile.getParentFile());
             scriptVariables.put("context", context);
 
-            result = interpreter.evaluateScript(script, classPath, scriptVariables, out);
+            interpreter.setClassPath(classPath);
+            result = interpreter.evaluateScript(script, scriptVariables, out);
             if (logger != null) {
                 logger.consumeLine("Finished " + scriptDescription + ": " + scriptFile);
             }
@@ -272,5 +274,18 @@ public class ScriptRunner {
             interpreter = scriptInterpreters.get("bsh");
         }
         return interpreter;
+    }
+
+    /**
+     * Closes this script interpreter and releases any system resources associated with it.
+     *
+     * @throws IOException if an I/O error occurs.
+     */
+    @Override
+    public void close() throws IOException {
+        for (ScriptInterpreter scriptInterpreter : scriptInterpreters.values()) {
+            scriptInterpreter.close();
+        }
+        scriptInterpreters.clear();
     }
 }

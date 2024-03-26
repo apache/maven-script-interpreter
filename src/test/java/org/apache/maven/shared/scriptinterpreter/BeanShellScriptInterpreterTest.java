@@ -39,8 +39,7 @@ public class BeanShellScriptInterpreterTest {
         ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
         assertEquals(
                 Boolean.TRUE,
-                interpreter.evaluateScript(
-                        "System.out.print(\"Test\"); return true;", null, null, new PrintStream(out)));
+                interpreter.evaluateScript("System.out.print(\"Test\"); return true;", null, new PrintStream(out)));
         assertEquals("Test", out.toString());
     }
 
@@ -52,8 +51,7 @@ public class BeanShellScriptInterpreterTest {
         ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
         assertEquals(
                 Boolean.TRUE,
-                interpreter.evaluateScript(
-                        "System.out.print(testVar); return true;", null, vars, new PrintStream(out)));
+                interpreter.evaluateScript("System.out.print(testVar); return true;", vars, new PrintStream(out)));
         assertEquals("data", out.toString());
     }
 }
