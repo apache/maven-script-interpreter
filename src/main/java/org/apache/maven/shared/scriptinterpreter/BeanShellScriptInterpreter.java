@@ -40,7 +40,18 @@ import bsh.TargetError;
  */
 class BeanShellScriptInterpreter implements ScriptInterpreter {
 
-    private URLClassLoader classLoader;
+    private static class AppendableURLClassLoader extends URLClassLoader {
+        AppendableURLClassLoader() {
+            super(new URL[] {}, Thread.currentThread().getContextClassLoader());
+        }
+
+        @Override
+        public void addURL(URL url) {
+            super.addURL(url);
+        }
+    }
+
+    private final AppendableURLClassLoader classLoader = new AppendableURLClassLoader();
 
     @Override
     public void setClassPath(List<String> classPath) {
@@ -48,8 +59,7 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
             return;
         }
 
-        URL[] urls = classPath.stream().map(this::toUrl).toArray(URL[]::new);
-        classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+        classPath.stream().map(this::toUrl).forEach(classLoader::addURL);
     }
 
     private URL toUrl(String path) {

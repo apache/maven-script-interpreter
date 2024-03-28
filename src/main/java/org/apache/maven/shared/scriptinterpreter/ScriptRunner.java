@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,11 +54,6 @@ public class ScriptRunner implements Closeable {
     private Map<String, Object> globalVariables;
 
     /**
-     * The additional class path for the script interpreter, never <code>null</code>.
-     */
-    private List<String> classPath;
-
-    /**
      * The file encoding of the hook scripts or <code>null</code> to use platform encoding.
      */
     private String encoding;
@@ -72,7 +66,6 @@ public class ScriptRunner implements Closeable {
         scriptInterpreters.put("bsh", new BeanShellScriptInterpreter());
         scriptInterpreters.put("groovy", new GroovyScriptInterpreter());
         globalVariables = new HashMap<>();
-        classPath = new ArrayList<>();
     }
 
     /**
@@ -104,7 +97,9 @@ public class ScriptRunner implements Closeable {
      * artifacts from the plugin class path.
      */
     public void setClassPath(List<String> classPath) {
-        this.classPath = (classPath != null) ? new ArrayList<>(classPath) : new ArrayList<>();
+        if (classPath != null && !classPath.isEmpty()) {
+            scriptInterpreters.values().forEach(scriptInterpreter -> scriptInterpreter.setClassPath(classPath));
+        }
     }
 
     /**
@@ -114,7 +109,7 @@ public class ScriptRunner implements Closeable {
      *                 default encoding.
      */
     public void setScriptEncoding(String encoding) {
-        this.encoding = (encoding != null && encoding.length() > 0) ? encoding : null;
+        this.encoding = (encoding != null && !encoding.isEmpty()) ? encoding : null;
     }
 
     /**
@@ -221,7 +216,6 @@ public class ScriptRunner implements Closeable {
             scriptVariables.put("basedir", scriptFile.getParentFile());
             scriptVariables.put("context", context);
 
-            interpreter.setClassPath(classPath);
             result = interpreter.evaluateScript(script, scriptVariables, out);
             if (logger != null) {
                 logger.consumeLine("Finished " + scriptDescription + ": " + scriptFile);
