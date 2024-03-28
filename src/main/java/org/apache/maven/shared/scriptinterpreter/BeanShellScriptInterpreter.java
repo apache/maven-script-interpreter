@@ -40,8 +40,8 @@ import bsh.TargetError;
  */
 class BeanShellScriptInterpreter implements ScriptInterpreter {
 
-    private static class AppendableURLClassLoader extends URLClassLoader {
-        AppendableURLClassLoader() {
+    private static class ChildFirstURLClassLoader extends URLClassLoader {
+        ChildFirstURLClassLoader() {
             super(new URL[] {}, Thread.currentThread().getContextClassLoader());
         }
 
@@ -49,9 +49,41 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
         public void addURL(URL url) {
             super.addURL(url);
         }
+
+        @Override
+        protected synchronized Class<?> loadClass(final String name, final boolean resolve)
+                throws ClassNotFoundException {
+
+            Class<?> c = findLoadedClass(name);
+            if (c != null) {
+                return c;
+            }
+
+            try {
+                c = super.findClass(name);
+            } catch (ClassNotFoundException e) {
+                // ignore
+            }
+
+            if (c == null) {
+                c = super.loadClass(name, resolve);
+            }
+
+            if (resolve) {
+                resolveClass(c);
+            }
+
+            return c;
+        }
+
+        @Override
+        public URL getResource(final String name) {
+            URL url = findResource(name);
+            return url != null ? url : super.getResource(name);
+        }
     }
 
-    private final AppendableURLClassLoader classLoader = new AppendableURLClassLoader();
+    private final ChildFirstURLClassLoader classLoader = new ChildFirstURLClassLoader();
 
     @Override
     public void setClassPath(List<String> classPath) {
