@@ -23,13 +23,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    ignore:
-      - dependency-name: org.codehaus.groovy:groovy
-        versions:
-          - ">= 2.5"
-      - dependency-name: commons-io:commons-io
-        versions:
-          - ">= 2.7"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
