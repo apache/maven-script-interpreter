@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ScriptRunner implements Closeable {
 
+    private static final Object LOCK = new Object();
+
     private static final Logger LOG = LoggerFactory.getLogger(ScriptRunner.class);
 
     /**
@@ -216,7 +218,9 @@ public class ScriptRunner implements Closeable {
             scriptVariables.put("basedir", scriptFile.getParentFile());
             scriptVariables.put("context", context);
 
-            result = interpreter.evaluateScript(script, scriptVariables, out);
+            synchronized (LOCK) {
+                result = interpreter.evaluateScript(script, scriptVariables, out);
+            }
             if (logger != null) {
                 logger.consumeLine("Finished " + scriptDescription + ": " + scriptFile);
             }
