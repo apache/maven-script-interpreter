@@ -35,27 +35,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  *
  * @author Benjamin Bentmann
  */
-public class GroovyScriptInterpreterTest {
+class GroovyScriptInterpreterTest {
     @Test
-    public void testEvaluateScript() throws Exception {
+    void testEvaluateScript() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-        assertEquals(
-                Boolean.TRUE, interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
+        }
         assertEquals("Test", out.toString());
     }
 
     @Test
-    public void testEvaluateScriptWithDefaultClassPath() throws Exception {
+    void testEvaluateScriptWithDefaultClassPath() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-
-        assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript(
-                        "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
-                        null,
-                        new PrintStream(out)));
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript(
+                            "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
+                            null,
+                            new PrintStream(out)));
+        }
 
         String testClassPath =
                 new File("target/test-classes/class-path.txt").toURI().getPath();
@@ -63,19 +65,20 @@ public class GroovyScriptInterpreterTest {
     }
 
     @Test
-    public void testEvaluateScriptWithCustomClassPath() throws Exception {
+    void testEvaluateScriptWithCustomClassPath() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
 
-        List<String> classPath = Collections.singletonList(new File("src/test-class-path").getAbsolutePath());
-        interpreter.setClassPath(classPath);
+            List<String> classPath = Collections.singletonList(new File("src/test-class-path").getAbsolutePath());
+            interpreter.setClassPath(classPath);
 
-        assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript(
-                        "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
-                        null,
-                        new PrintStream(out)));
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript(
+                            "print getClass().getResource( \"/class-path.txt\" ).getPath().toURI().getPath()\nreturn true",
+                            null,
+                            new PrintStream(out)));
+        }
 
         String testClassPath =
                 new File("src/test-class-path/class-path.txt").toURI().getPath();
@@ -83,13 +86,14 @@ public class GroovyScriptInterpreterTest {
     }
 
     @Test
-    public void testEvaluateScriptVars() throws Exception {
+    void testEvaluateScriptVars() throws Exception {
         Map<String, Object> vars = new HashMap<>();
         vars.put("testVar", "data");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new GroovyScriptInterpreter();
-        assertEquals(
-                Boolean.TRUE, interpreter.evaluateScript("print testVar\nreturn true", vars, new PrintStream(out)));
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE, interpreter.evaluateScript("print testVar\nreturn true", vars, new PrintStream(out)));
+        }
         assertEquals("data", out.toString());
     }
 }

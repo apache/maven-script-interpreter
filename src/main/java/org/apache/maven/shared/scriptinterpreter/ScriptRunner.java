@@ -111,7 +111,7 @@ public class ScriptRunner implements Closeable {
      *                 default encoding.
      */
     public void setScriptEncoding(String encoding) {
-        this.encoding = (encoding != null && !encoding.isEmpty()) ? encoding : null;
+        this.encoding = encoding != null && !encoding.isEmpty() ? encoding : null;
     }
 
     /**

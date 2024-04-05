@@ -32,26 +32,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  *
  * @author Benjamin Bentmann
  */
-public class BeanShellScriptInterpreterTest {
+class BeanShellScriptInterpreterTest {
     @Test
-    public void testEvaluateScript() throws Exception {
+    void testEvaluateScript() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
-        assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript("System.out.print(\"Test\"); return true;", null, new PrintStream(out)));
+        try (ScriptInterpreter interpreter = new BeanShellScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("System.out.print(\"Test\"); return true;", null, new PrintStream(out)));
+        }
         assertEquals("Test", out.toString());
     }
 
     @Test
-    public void testEvaluateScriptVars() throws Exception {
+    void testEvaluateScriptVars() throws Exception {
         Map<String, Object> vars = new HashMap<>();
         vars.put("testVar", "data");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ScriptInterpreter interpreter = new BeanShellScriptInterpreter();
-        assertEquals(
-                Boolean.TRUE,
-                interpreter.evaluateScript("System.out.print(testVar); return true;", vars, new PrintStream(out)));
+        try (ScriptInterpreter interpreter = new BeanShellScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("System.out.print(testVar); return true;", vars, new PrintStream(out)));
+        }
         assertEquals("data", out.toString());
     }
 }
