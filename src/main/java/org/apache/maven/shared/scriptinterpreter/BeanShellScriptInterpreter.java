@@ -128,9 +128,7 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                 }
             }
 
-            if (classLoader != null) {
-                engine.setClassLoader(classLoader);
-            }
+            engine.setClassLoader(classLoader);
 
             if (globalVariables != null) {
                 for (Map.Entry<String, ?> entry : globalVariables.entrySet()) {
@@ -159,8 +157,6 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
 
     @Override
     public void close() throws IOException {
-        if (classLoader != null) {
-            classLoader.close();
-        }
+        classLoader.close();
     }
 }
