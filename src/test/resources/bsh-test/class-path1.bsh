@@ -17,11 +17,15 @@
  * under the License.
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
-Logger logger = LoggerFactory.getLogger("test");
-context.put("logger", logger);
-logger.info("Test log 1");
+
+WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort().dynamicHttpsPort());
+wireMockServer.start();
+
+System.out.println("wireMockServer started with port=" + wireMockServer.port());
+
+context.put("wireMockServer", wireMockServer);
 
 return true;
