@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.apache.maven.shared</groupId>
     <artifactId>maven-shared-components</artifactId>
-    <version>41</version>
+    <version>42</version>
     <relativePath />
   </parent>
 
@@ -58,19 +58,6 @@
     <project.build.outputTimestamp>2024-04-05T18:38:18Z</project.build.outputTimestamp>
     <slf4j.version>1.7.36</slf4j.version>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <!-- MPOM-455 remove with parent 42 upgrade -->
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>5.10.2</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <dependency>
