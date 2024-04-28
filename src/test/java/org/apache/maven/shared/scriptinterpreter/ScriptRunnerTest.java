@@ -20,7 +20,7 @@ package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -251,18 +251,17 @@ public class ScriptRunnerTest {
 
         try (FileLogger logger = new FileLogger(logFile);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
-            scriptRunner.setClassPath(
-                    Arrays.asList("target/dependency/slf4j-api.jar", "target/dependency/slf4j-simple.jar"));
+            scriptRunner.setClassPath(Collections.singletonList("target/dependency/wiremock-jre8-standalone.jar"));
 
             scriptRunner.run("test classpath 1", basedir, "class-path1", context, logger);
-            assertNotNull(context.get("logger"));
+            assertNotNull(context.get("wireMockServer"));
 
             scriptRunner.run("test classpath 2", basedir, "class-path2", context, logger);
         }
 
         String logContent = new String(Files.readAllBytes(logFile.toPath()));
-        assertTrue(logContent.contains("INFO test - Test log 1"));
-        assertTrue(logContent.contains("INFO test - Test log 2"));
+        assertTrue(logContent.contains("wireMockServer started with port="));
+        assertTrue(logContent.contains("wireMockServer stopped"));
     }
 
     private Map<String, ?> buildContext() {

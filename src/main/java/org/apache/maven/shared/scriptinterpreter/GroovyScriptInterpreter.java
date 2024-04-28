@@ -68,6 +68,7 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
         PrintStream origOut = System.out;
         PrintStream origErr = System.err;
 
+        ClassLoader curentClassLoader = Thread.currentThread().getContextClassLoader();
         try {
 
             if (scriptOutput != null) {
@@ -80,10 +81,12 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
                     new Binding(globalVariables),
                     new CompilerConfiguration(CompilerConfiguration.DEFAULT));
 
+            Thread.currentThread().setContextClassLoader(childFirstLoader);
             return interpreter.evaluate(script);
         } catch (Throwable e) {
             throw new ScriptEvaluationException(e);
         } finally {
+            Thread.currentThread().setContextClassLoader(curentClassLoader);
             System.setErr(origErr);
             System.setOut(origOut);
         }

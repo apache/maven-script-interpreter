@@ -17,9 +17,11 @@
  * under the License.
  */
 
-import org.slf4j.Logger;
+import com.github.tomakehurst.wiremock.WireMockServer;
 
-Logger logger = context.get("logger");
-logger.info("Test log 2");
+WireMockServer wireMockServer = context.get("wireMockServer");
+wireMockServer.stop();
+
+System.out.println("wireMockServer stopped");
 
 return true;

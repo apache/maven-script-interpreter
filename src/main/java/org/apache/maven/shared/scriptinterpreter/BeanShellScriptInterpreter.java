@@ -139,8 +139,9 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                     }
                 }
             }
-
+            ClassLoader curentClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                Thread.currentThread().setContextClassLoader(classLoader);
                 return engine.eval(script);
             } catch (TargetError e) {
                 throw new ScriptEvaluationException(e.getTarget());
@@ -148,6 +149,8 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                 throw e;
             } catch (Throwable e) {
                 throw new ScriptEvaluationException(e);
+            } finally {
+                Thread.currentThread().setContextClassLoader(curentClassLoader);
             }
         } finally {
             System.setErr(origErr);
