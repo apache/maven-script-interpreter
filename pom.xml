@@ -40,8 +40,8 @@
     <url>https://github.com/apache/maven-script-interpreter/tree/${project.scm.tag}</url>
   </scm>
   <issueManagement>
-    <system>jira</system>
-    <url>https://issues.apache.org/jira/browse/MSHARED</url>
+    <system>GitHub Issues</system>
+    <url>https://github.com/apache/maven-script-interpreter/issues</url>
   </issueManagement>
   <ciManagement>
     <system>Jenkins</system>
