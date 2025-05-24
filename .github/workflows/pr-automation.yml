@@ -15,6 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-_extends: maven-gh-actions-shared
-# Template is individual, because only major and minor version are used
-tag-template: maven-script-interpreter-$NEXT_MINOR_VERSION
+name: PR Automation
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  pr-automation:
+    name: PR Automation
+    uses: apache/maven-gh-actions-shared/.github/workflows/pr-automation.yml@v4
