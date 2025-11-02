@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class GroovyScriptInterpreterTest {
     @Test
-    void testEvaluateScript() throws Exception {
+    void evaluateScript() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
             assertEquals(
@@ -48,7 +48,7 @@ class GroovyScriptInterpreterTest {
     }
 
     @Test
-    void testEvaluateScriptWithDefaultClassPath() throws Exception {
+    void evaluateScriptWithDefaultClassPath() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
             assertEquals(
@@ -65,7 +65,7 @@ class GroovyScriptInterpreterTest {
     }
 
     @Test
-    void testEvaluateScriptWithCustomClassPath() throws Exception {
+    void evaluateScriptWithCustomClassPath() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
 
@@ -86,7 +86,7 @@ class GroovyScriptInterpreterTest {
     }
 
     @Test
-    void testEvaluateScriptVars() throws Exception {
+    void evaluateScriptVars() throws Exception {
         Map<String, Object> vars = new HashMap<>();
         vars.put("testVar", "data");
         ByteArrayOutputStream out = new ByteArrayOutputStream();

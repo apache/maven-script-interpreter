@@ -19,7 +19,6 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ public class FileLoggerTest {
     public static final String EXPECTED_LOG = "Test1" + System.lineSeparator() + "Test2" + System.lineSeparator();
 
     @Test
-    public void nullOutputFileNoMirror() throws IOException {
+    void nullOutputFileNoMirror() throws Exception {
         try (FileLogger fileLogger = new FileLogger(null)) {
             fileLogger.consumeLine("Test1");
             fileLogger.getPrintStream().println("Test2");
@@ -47,7 +46,7 @@ public class FileLoggerTest {
     }
 
     @Test
-    public void nullOutputFileWithMirror() throws IOException {
+    void nullOutputFileWithMirror() throws Exception {
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
@@ -62,7 +61,7 @@ public class FileLoggerTest {
     }
 
     @Test
-    public void nullOutputFileWithMirrorWriteByte() throws IOException {
+    void nullOutputFileWithMirrorWriteByte() throws Exception {
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
@@ -76,7 +75,7 @@ public class FileLoggerTest {
     }
 
     @Test
-    public void outputFileNoMirror() throws IOException {
+    void outputFileNoMirror() throws Exception {
         File outputFile = new File("target/test.log");
         if (outputFile.exists()) {
             outputFile.delete();
@@ -95,7 +94,7 @@ public class FileLoggerTest {
     }
 
     @Test
-    public void outputFileWithMirror() throws IOException {
+    void outputFileWithMirror() throws Exception {
         File outputFile = new File("target/test.log");
         if (outputFile.exists()) {
             outputFile.delete();
