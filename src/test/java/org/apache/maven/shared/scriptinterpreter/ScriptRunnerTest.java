@@ -36,13 +36,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Olivier Lamy
  */
-public class ScriptRunnerTest {
+class ScriptRunnerTest {
 
     @TempDir
     private File tempDir;
 
     @Test
-    public void testBeanshell() throws Exception {
+    void beanshell() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -62,7 +62,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void beanshellReturnedNullShouldBeOk() throws Exception {
+    void beanshellReturnedNullShouldBeOk() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -79,7 +79,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void failedBeanshellShouldCreateProperLogsMessage() throws Exception {
+    void failedBeanshellShouldCreateProperLogsMessage() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -100,7 +100,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void beanshellReturnedNotTrueShouldThrowException() throws Exception {
+    void beanshellReturnedNotTrueShouldThrowException() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -122,7 +122,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void testBeanshellWithFile() throws Exception {
+    void beanshellWithFile() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -141,7 +141,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void testGroovy() throws Exception {
+    void groovy() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -161,7 +161,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void groovyReturnedNullShouldBeOk() throws Exception {
+    void groovyReturnedNullShouldBeOk() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -179,7 +179,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void failedGroovyShouldCreateProperLogsMessage() throws Exception {
+    void failedGroovyShouldCreateProperLogsMessage() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -200,7 +200,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void groovyReturnedFalseShouldThrowException() throws Exception {
+    void groovyReturnedFalseShouldThrowException() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
@@ -223,7 +223,7 @@ public class ScriptRunnerTest {
     }
 
     @Test
-    public void testGroovyWithFile() throws Exception {
+    void groovyWithFile() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();

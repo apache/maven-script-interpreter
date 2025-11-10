@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class BeanShellScriptInterpreterTest {
     @Test
-    void testEvaluateScript() throws Exception {
+    void evaluateScript() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ScriptInterpreter interpreter = new BeanShellScriptInterpreter()) {
             assertEquals(
@@ -45,7 +45,7 @@ class BeanShellScriptInterpreterTest {
     }
 
     @Test
-    void testEvaluateScriptVars() throws Exception {
+    void evaluateScriptVars() throws Exception {
         Map<String, Object> vars = new HashMap<>();
         vars.put("testVar", "data");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
