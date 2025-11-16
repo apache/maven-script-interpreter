@@ -25,7 +25,7 @@ class TestMirrorHandler implements FileLoggerMirrorHandler {
 
     private StringBuilder loggedMessage;
 
-    public TestMirrorHandler() {
+    TestMirrorHandler() {
         loggedMessage = new StringBuilder();
     }
 

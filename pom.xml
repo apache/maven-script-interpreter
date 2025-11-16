@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.apache.maven.shared</groupId>
     <artifactId>maven-shared-components</artifactId>
-    <version>42</version>
+    <version>45</version>
     <relativePath />
   </parent>
 
@@ -55,8 +55,10 @@
   </distributionManagement>
 
   <properties>
-    <project.build.outputTimestamp>2024-04-29T21:40:28Z</project.build.outputTimestamp>
     <slf4j.version>1.7.36</slf4j.version>
+    <project.build.outputTimestamp>2024-04-29T21:40:28Z</project.build.outputTimestamp>
+
+    <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
   </properties>
 
   <dependencies>
