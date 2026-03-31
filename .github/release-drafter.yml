@@ -15,6 +15,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-_extends: maven-gh-actions-shared
-# Template is individual, because only major and minor version are used
-tag-template: maven-script-interpreter-$NEXT_MINOR_VERSION
+_extends: maven-gh-actions-shared:/.github/release-drafter.yml
+tag-template: maven-script-interpreter-$RESOLVED_VERSION
