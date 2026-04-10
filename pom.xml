@@ -55,7 +55,7 @@
   </distributionManagement>
 
   <properties>
-    <slf4j.version>1.7.36</slf4j.version>
+    <slf4j.version>2.0.0</slf4j.version>
     <project.build.outputTimestamp>2024-04-29T21:40:28Z</project.build.outputTimestamp>
 
     <version.maven-invoker-plugin>3.9.1</version.maven-invoker-plugin>
