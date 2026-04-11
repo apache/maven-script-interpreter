@@ -48,12 +48,12 @@ public class ScriptRunner implements Closeable {
      * The supported script interpreters, indexed by the lower-case file extension of their associated script files,
      * never <code>null</code>.
      */
-    private Map<String, ScriptInterpreter> scriptInterpreters;
+    private final Map<String, ScriptInterpreter> scriptInterpreters;
 
     /**
      * The common set of global variables to pass into the script interpreter, never <code>null</code>.
      */
-    private Map<String, Object> globalVariables;
+    private final Map<String, Object> globalVariables;
 
     /**
      * The file encoding of the hook scripts or <code>null</code> to use platform encoding.
@@ -149,12 +149,6 @@ public class ScriptRunner implements Closeable {
             return;
         }
 
-        LOG.info(
-                "run {} {}.{}",
-                scriptDescription,
-                relativeScriptPath,
-                FilenameUtils.getExtension(scriptFile.getAbsolutePath()));
-
         executeRun(scriptDescription, scriptFile, context, logger);
     }
 
@@ -176,8 +170,6 @@ public class ScriptRunner implements Closeable {
             LOG.debug("{} : script file not found in directory {}", scriptDescription, scriptFile.getAbsolutePath());
             return;
         }
-
-        LOG.info("run {} {}", scriptDescription, scriptFile.getAbsolutePath());
 
         executeRun(scriptDescription, scriptFile, context, logger);
     }
