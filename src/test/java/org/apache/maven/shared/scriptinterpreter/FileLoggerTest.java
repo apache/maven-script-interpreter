@@ -22,6 +22,7 @@ import java.io.File;
 import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -75,11 +76,8 @@ public class FileLoggerTest {
     }
 
     @Test
-    void outputFileNoMirror() throws Exception {
-        File outputFile = new File("target/test.log");
-        if (outputFile.exists()) {
-            outputFile.delete();
-        }
+    void outputFileNoMirror(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "/target/test.log");
 
         try (FileLogger fileLogger = new FileLogger(outputFile)) {
             fileLogger.consumeLine("Test1");
@@ -94,11 +92,8 @@ public class FileLoggerTest {
     }
 
     @Test
-    void outputFileWithMirror() throws Exception {
-        File outputFile = new File("target/test.log");
-        if (outputFile.exists()) {
-            outputFile.delete();
-        }
+    void outputFileWithMirror(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "target/test.log");
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
 
         try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
