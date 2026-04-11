@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
 
 /**
  * <p>FileLogger class.</p>
@@ -62,8 +64,9 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         OutputStream outputStream;
 
         if (outputFile != null) {
-            outputFile.getParentFile().mkdirs();
-            outputStream = Files.newOutputStream(outputFile.toPath());
+            Path outputPath = outputFile.toPath();
+            Files.createDirectories(outputPath.getParent());
+            outputStream = createOutputStream(outputPath);
         } else {
             outputStream = new NullOutputStream();
         }
@@ -73,6 +76,16 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         } else {
             stream = new PrintStream(outputStream);
         }
+    }
+
+    /**
+     * <p>Override this method to create a custom output stream.
+     *
+     * <p>By default, stream is created with {@link Files#newOutputStream(Path, OpenOption...)},
+     * which truncate the existing file.
+     */
+    protected OutputStream createOutputStream(Path outputPath) throws IOException {
+        return Files.newOutputStream(outputPath);
     }
 
     /**
