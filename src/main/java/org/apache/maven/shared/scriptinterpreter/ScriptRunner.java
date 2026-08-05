@@ -105,6 +105,18 @@ public class ScriptRunner implements Closeable {
     }
 
     /**
+     * Sets the target bytecode version for the hook scripts, for interpreters that support bytecode-level
+     * compilation.
+     *
+     * @param version The target bytecode version, may be <code>null</code> to use each interpreter's own default.
+     */
+    public void setTargetBytecode(String version) {
+        if (version != null) {
+            scriptInterpreters.values().forEach(scriptInterpreter -> scriptInterpreter.setTargetBytecode(version));
+        }
+    }
+
+    /**
      * Sets the file encoding of the hook scripts.
      *
      * @param encoding The file encoding of the hook scripts, may be <code>null</code> or empty to use the platform's
