@@ -96,4 +96,24 @@ class GroovyScriptInterpreterTest {
         }
         assertEquals("data", out.toString());
     }
+
+    @Test
+    void evaluateScriptWithTargetBytecode() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            interpreter.setTargetBytecode("8");
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
+        }
+        assertEquals("Test", out.toString());
+    }
+
+    @Test
+    void normalizeTargetBytecodeMapsOldJdksToDotForm() {
+        assertEquals("1.4", GroovyScriptInterpreter.normalizeTargetBytecode("4"));
+        assertEquals("1.8", GroovyScriptInterpreter.normalizeTargetBytecode("8"));
+        assertEquals("9", GroovyScriptInterpreter.normalizeTargetBytecode("9"));
+        assertEquals("17", GroovyScriptInterpreter.normalizeTargetBytecode("17"));
+    }
 }

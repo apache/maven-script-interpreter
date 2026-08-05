@@ -42,6 +42,16 @@ public interface ScriptInterpreter extends Closeable {
     void setClassPath(List<String> classPath);
 
     /**
+     * Sets the target bytecode version for interpreters that support bytecode-level compilation. Interpreters
+     * that do not compile to a specific bytecode level (for example BeanShell) may ignore this.
+     *
+     * @param version The target bytecode version, may be <code>null</code> to use the interpreter's own default.
+     */
+    default void setTargetBytecode(String version) {
+        // no-op by default
+    }
+
+    /**
      * Evaluates the specified script.
      *
      * @param script          The script contents to evaluate, must not be <code>null</code>.

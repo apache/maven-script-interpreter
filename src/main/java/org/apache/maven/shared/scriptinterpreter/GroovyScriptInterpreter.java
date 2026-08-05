@@ -42,6 +42,8 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
     private final RootLoader childFirstLoader =
             new RootLoader(new URL[] {}, Thread.currentThread().getContextClassLoader());
 
+    private String targetBytecode;
+
     @Override
     public void setClassPath(List<String> classPath) {
         if (classPath == null || classPath.isEmpty()) {
@@ -51,11 +53,37 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
         classPath.stream().map(this::toUrl).forEach(childFirstLoader::addURL);
     }
 
+    @Override
+    public void setTargetBytecode(String version) {
+        this.targetBytecode = version;
+    }
+
     private URL toUrl(String path) {
         try {
             return new File(path).toURI().toURL();
         } catch (MalformedURLException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Maps a Maven-style release value (for example <code>"8"</code>) to the version string Groovy's
+     * {@link CompilerConfiguration#setTargetBytecode(String)} expects (for example <code>"1.8"</code>). Groovy uses
+     * the <code>"1.x"</code> form for JDK 4 through 8, and bare version numbers from JDK 9 onward.
+     *
+     * @param version The Maven-style release value, must not be <code>null</code>.
+     * @return The Groovy-compatible bytecode version string.
+     */
+    static String normalizeTargetBytecode(String version) {
+        switch (version) {
+            case "4":
+            case "5":
+            case "6":
+            case "7":
+            case "8":
+                return "1." + version;
+            default:
+                return version;
         }
     }
 
@@ -76,10 +104,13 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
                 System.setOut(scriptOutput);
             }
 
-            GroovyShell interpreter = new GroovyShell(
-                    childFirstLoader,
-                    new Binding(globalVariables),
-                    new CompilerConfiguration(CompilerConfiguration.DEFAULT));
+            CompilerConfiguration compilerConfiguration = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
+            if (targetBytecode != null) {
+                compilerConfiguration.setTargetBytecode(normalizeTargetBytecode(targetBytecode));
+            }
+
+            GroovyShell interpreter =
+                    new GroovyShell(childFirstLoader, new Binding(globalVariables), compilerConfiguration);
 
             Thread.currentThread().setContextClassLoader(childFirstLoader);
             return interpreter.evaluate(script);
