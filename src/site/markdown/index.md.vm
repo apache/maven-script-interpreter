@@ -1,145 +1,134 @@
- ------
- Introduction
- ------
- Olivier Lamy
- ------
- 2013-07-24
- ------
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
- ~~ Licensed to the Apache Software Foundation (ASF) under one
- ~~ or more contributor license agreements.  See the NOTICE file
- ~~ distributed with this work for additional information
- ~~ regarding copyright ownership.  The ASF licenses this file
- ~~ to you under the Apache License, Version 2.0 (the
- ~~ "License"); you may not use this file except in compliance
- ~~ with the License.  You may obtain a copy of the License at
- ~~
- ~~   http://www.apache.org/licenses/LICENSE-2.0
- ~~
- ~~ Unless required by applicable law or agreed to in writing,
- ~~ software distributed under the License is distributed on an
- ~~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- ~~ KIND, either express or implied.  See the License for the
- ~~ specific language governing permissions and limitations
- ~~ under the License.
+http://www.apache.org/licenses/LICENSE-2.0
 
- ~~ NOTE: For help with the syntax of this file, see:
- ~~ http://maven.apache.org/doxia/references/apt-format.html
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
 
-${project.name}
+# ${project.name}
 
-  This component provides some utilities to interpret/execute some scripts for various implementations: groovy or beanshell.
+This component provides some utilities to interpret/execute some scripts for various implementations: groovy or beanshell.
 
-* Dependency declaration
+Dependency declaration
+----------------------
 
-+---------
+```unknown
 <dependency>
   <groupId>org.apache.maven.shared</groupId>
   <artifactId>maven-script-interpreter</artifactId>
   <version>${project.version}</version>
 </dependency>
-+---------
+```
 
-  <<<maven-script-interpreter>>> has dependency only to core interpreters library,
-  all specific extensions should be added in your project.
+`maven-script-interpreter` has dependency only to core interpreters library, all specific extensions should be added in your project.
 
-  For example, if you want to use {{{https://docs.groovy-lang.org/latest/html/documentation/grape.html}<<Grape>>}}
-  in a <<Groovy>> script, you must add a dependency to Ivy in your project or in the plugin that will invoke the script:
+For example, if you want to use [**Grape**](https://docs.groovy-lang.org/latest/html/documentation/grape.html) in a **Groovy** script, you must add a dependency to Ivy in your project or in the plugin that will invoke the script:
 
-+---------
+```unknown
 <dependency>
   <groupId>org.apache.ivy</groupId>
   <artifactId>ivy</artifactId>
   <version>...</version>
 </dependency>
-+---------
+```
 
-* Using ScriptRunner
+Using ScriptRunner
+------------------
 
-  <<<ScriptRunner>>> class will detect the script file to run based on supported extensions (<<<.bsh>>>, <<<.groovy>>>).
+`ScriptRunner` class will detect the script file to run based on supported extensions (`.bsh`, `.groovy`).
 
-  This class will search in the provided directory the script with the provided fileName and the supported extensions.
+This class will search in the provided directory the script with the provided fileName and the supported extensions.
 
-  See {{{./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html}javadoc}} for <<<run(...)>>> methods.
+See [javadoc](./apidocs/org/apache/maven/shared/scriptinterpreter/ScriptRunner.html) for `run(...)` methods.
 
-+---------
+```unknown
 try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
             new FileLogger(logFile));
 }
-+---------
+```
 
-* Mirror output from script interpreter
+Mirror output from script interpreter
+-------------------------------------
 
-  In order to do something more with script output, eg. log by your application you must implement <<<FileLoggerMirrorHandler>>>
+In order to do something more with script output, eg. log by your application you must implement `FileLoggerMirrorHandler`
 
-+---------
+```unknown
 class MyMirrorHandler implements FileLoggerMirrorHandler {
     void consumeOutput(String message) {
         // this method is invoked every time when flush occurs on the underlying stream.
     }
 }
-+---------
+```
 
-  Now use it:
+Now use it:
 
-+---------
+```unknown
 try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
             new FileLogger(logFile, new MyMirrorHandler()));
 }
-+---------
+```
 
-** Global variables
+#[[### Global variables]]#
 
-  Your scripts will have by default two global variables:
+Your scripts will have by default two global variables:
 
-  * <<<basedir>>>: the base directory of your script
+- `basedir`: the base directory of your script
+- `context`: the build context (see below)
 
-  * <<<context>>>: the build context (see below)
+You can add more global variables as it.
 
-  []
-
-   You can add more global variables as it.
-
-+---------
+```unknown
 try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.setGlobalVariable( name, value );
     ...
 }
-+---------
+```
 
-** Build context
+#[[### Build context]]#
 
-  You can pass some values to your script using an execution context which have the type <<<Map<String, ? extends Object> context>>>:
+You can pass some values to your script using an execution context which have the type `Map<String, ? extends Object> context`:
 
-+---------
+```unknown
 private Map<String, Object> buildContext() {
     Map<String, Object> context = new HashMap<String, Object>();
     context.put("foo", "bar");
     return context;
 }
-+---------
+```
 
-  Then values are available in scripts context:
+Then values are available in scripts context:
 
-+---------
+```unknown
 // in your bsh script
 String value = context.get( "foo" );
-+---------
+```
 
-    value will be "bar"
+value will be "bar"
 
-+---------
+```unknown
 // in your Groovy script
 context.get("foo")
-+---------
+```
 
-** Additional classpath entries
+#[[### Additional classpath entries]]#
 
-  You can add some additional classpath entries for your script execution
+You can add some additional classpath entries for your script execution
 
-+---------
+```unknown
 List<String> classpathEntries = list of jar paths
 
 try (ScriptRunner scriptRunner = new ScriptRunner()) {
@@ -147,4 +136,4 @@ try (ScriptRunner scriptRunner = new ScriptRunner()) {
     scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(),
             new FileLogger(logFile));
  }
-+---------
+```
