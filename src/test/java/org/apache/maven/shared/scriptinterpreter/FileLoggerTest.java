@@ -19,6 +19,7 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
@@ -108,5 +109,23 @@ public class FileLoggerTest {
 
         assertTrue(outputFile.exists());
         assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+    }
+
+    /**
+     * Verifies that non-ASCII bytes are decoded as UTF-8 by the mirror handler, not the platform default charset.
+     * "café" in UTF-8: {0x63, 0x61, 0x66, 0xC3, 0xA9, 0x0A}.
+     * A platform that decodes these bytes as ISO-8859-1 would produce "cafÃ©" instead of "café".
+     */
+    @Test
+    void mirrorShouldDecodeBytesAsUtf8() throws Exception {
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+        byte[] utf8Bytes = "café\n".getBytes(StandardCharsets.UTF_8);
+
+        try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
+            fileLogger.getPrintStream().write(utf8Bytes);
+            fileLogger.getPrintStream().flush();
+        }
+
+        assertEquals("café" + System.lineSeparator(), mirrorHandler.getLoggedMessage());
     }
 }

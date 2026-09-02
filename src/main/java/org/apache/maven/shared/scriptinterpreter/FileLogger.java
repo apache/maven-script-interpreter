@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -72,7 +74,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         }
 
         if (mirrorHandler != null) {
-            stream = new PrintStream(new MirrorStreamWrapper(outputStream, mirrorHandler));
+            stream = new PrintStream(new MirrorStreamWrapper(outputStream, mirrorHandler, StandardCharsets.UTF_8));
         } else {
             stream = new PrintStream(outputStream);
         }
@@ -135,11 +137,14 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
 
         private final FileLoggerMirrorHandler mirrorHandler;
 
+        private final Charset charset;
+
         private StringBuilder lineBuffer;
 
-        MirrorStreamWrapper(OutputStream outputStream, FileLoggerMirrorHandler mirrorHandler) {
+        MirrorStreamWrapper(OutputStream outputStream, FileLoggerMirrorHandler mirrorHandler, Charset charset) {
             this.out = outputStream;
             this.mirrorHandler = mirrorHandler;
+            this.charset = charset;
             this.lineBuffer = new StringBuilder();
         }
 
@@ -152,7 +157,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             out.write(b, off, len);
-            lineBuffer.append(new String(b, off, len));
+            lineBuffer.append(new String(b, off, len, charset));
         }
 
         @Override
