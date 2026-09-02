@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class FileLoggerTest {
 
-    public static final String EXPECTED_LOG = "Test1" + System.lineSeparator() + "Test2" + System.lineSeparator();
+    public static final String EXPECTED_LOG = "Test1\nTest2\n";
 
     @Test
     void nullOutputFileNoMirror() throws Exception {
@@ -73,7 +74,7 @@ public class FileLoggerTest {
             assertNull(fileLogger.getOutputFile());
         }
 
-        assertEquals("A" + System.lineSeparator(), mirrorHandler.getLoggedMessage());
+        assertEquals("A\n", mirrorHandler.getLoggedMessage());
     }
 
     @Test
@@ -112,20 +113,25 @@ public class FileLoggerTest {
     }
 
     /**
-     * Verifies that non-ASCII bytes are decoded as UTF-8 by the mirror handler, not the platform default charset.
+     * Verifies that non-ASCII content written through the logger is encoded and decoded as UTF-8
+     * on both the mirror handler and the underlying file, independent of the platform default
+     * charset and line separator.
      * "café" in UTF-8: {0x63, 0x61, 0x66, 0xC3, 0xA9, 0x0A}.
      * A platform that decodes these bytes as ISO-8859-1 would produce "cafÃ©" instead of "café".
      */
     @Test
-    void mirrorShouldDecodeBytesAsUtf8() throws Exception {
+    void mirrorAndFileShouldUseUtf8(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "utf8.log");
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
-        byte[] utf8Bytes = "café\n".getBytes(StandardCharsets.UTF_8);
 
-        try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
-            fileLogger.getPrintStream().write(utf8Bytes);
+        try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
+            fileLogger.getPrintStream().write("café".getBytes(StandardCharsets.UTF_8));
+            fileLogger.getPrintStream().write('\n');
             fileLogger.getPrintStream().flush();
         }
 
-        assertEquals("café" + System.lineSeparator(), mirrorHandler.getLoggedMessage());
+        assertEquals("café\n", mirrorHandler.getLoggedMessage());
+        assertTrue(outputFile.exists());
+        assertArrayEquals("café\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
     }
 }

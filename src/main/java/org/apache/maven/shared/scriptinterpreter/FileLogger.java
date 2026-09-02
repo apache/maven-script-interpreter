@@ -18,11 +18,11 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -39,7 +39,8 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     private File file;
 
     /**
-     * The underlying file stream this logger writes to.
+     * The underlying file stream this logger writes to. It is always UTF-8 encoded so that
+     * output is independent of the platform default charset.
      */
     private PrintStream stream;
 
@@ -74,9 +75,10 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         }
 
         if (mirrorHandler != null) {
-            stream = new PrintStream(new MirrorStreamWrapper(outputStream, mirrorHandler, StandardCharsets.UTF_8));
+            this.stream = new PrintStream(
+                    new MirrorStreamWrapper(outputStream, mirrorHandler), false, StandardCharsets.UTF_8.name());
         } else {
-            stream = new PrintStream(outputStream);
+            this.stream = new PrintStream(outputStream, false, StandardCharsets.UTF_8.name());
         }
     }
 
@@ -110,14 +112,17 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     }
 
     /**
-     * Writes the specified line to the log file
-     * and invoke {@link FileLoggerMirrorHandler#consumeOutput(String)} if is given.
+     * Writes the specified line to the log file and invokes
+     * {@link FileLoggerMirrorHandler#consumeOutput(String)} if a mirror handler is configured.
+     * A Unix line terminator (LF) is always used, regardless of the platform, so log files are
+     * identical across operating systems.
      *
      * @param line The message to log.
      */
     @Override
     public void consumeLine(String line) {
-        stream.println(line);
+        stream.print(line);
+        stream.print('\n');
         stream.flush();
     }
 
@@ -132,63 +137,61 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         }
     }
 
+    /**
+     * A byte stream that forwards every byte to the underlying output stream and mirrors each
+     * flushed chunk to the {@link FileLoggerMirrorHandler} as a UTF-8 decoded string, using a
+     * Unix line terminator (LF) for platform independence.
+     */
     private static class MirrorStreamWrapper extends OutputStream {
-        private OutputStream out;
+        private final OutputStream out;
 
         private final FileLoggerMirrorHandler mirrorHandler;
 
-        private final Charset charset;
+        private final ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream();
 
-        private StringBuilder lineBuffer;
-
-        MirrorStreamWrapper(OutputStream outputStream, FileLoggerMirrorHandler mirrorHandler, Charset charset) {
-            this.out = outputStream;
+        MirrorStreamWrapper(OutputStream out, FileLoggerMirrorHandler mirrorHandler) {
+            this.out = out;
             this.mirrorHandler = mirrorHandler;
-            this.charset = charset;
-            this.lineBuffer = new StringBuilder();
         }
 
         @Override
         public void write(int b) throws IOException {
             out.write(b);
-            lineBuffer.append((char) (b));
+            lineBuffer.write(b);
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
             out.write(b, off, len);
-            lineBuffer.append(new String(b, off, len, charset));
+            lineBuffer.write(b, off, len);
         }
 
         @Override
         public void flush() throws IOException {
             out.flush();
 
-            int len = lineBuffer.length();
+            byte[] bytes = lineBuffer.toByteArray();
+            int len = bytes.length;
             if (len == 0) {
                 // nothing to log
                 return;
             }
 
             // remove line end for log
-            while (len > 0 && (lineBuffer.charAt(len - 1) == '\n' || lineBuffer.charAt(len - 1) == '\r')) {
+            while (len > 0 && (bytes[len - 1] == '\n' || bytes[len - 1] == '\r')) {
                 len--;
             }
-            lineBuffer.setLength(len);
 
-            mirrorHandler.consumeOutput(lineBuffer.toString());
+            mirrorHandler.consumeOutput(new String(bytes, 0, len, StandardCharsets.UTF_8));
 
             // clear buffer
-            lineBuffer = new StringBuilder();
+            lineBuffer.reset();
         }
 
         @Override
         public void close() throws IOException {
             flush();
-            if (out != null) {
-                out.close();
-                out = null;
-            }
+            out.close();
         }
     }
 
