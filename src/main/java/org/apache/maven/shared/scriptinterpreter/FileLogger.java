@@ -18,10 +18,12 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -72,9 +74,10 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         }
 
         if (mirrorHandler != null) {
-            stream = new PrintStream(new MirrorStreamWrapper(outputStream, mirrorHandler));
+            this.stream = new PrintStream(
+                    new MirrorStreamWrapper(outputStream, mirrorHandler), false, StandardCharsets.UTF_8.name());
         } else {
-            stream = new PrintStream(outputStream);
+            this.stream = new PrintStream(new LineFeedNormalizer(outputStream), false, StandardCharsets.UTF_8.name());
         }
     }
 
@@ -108,14 +111,17 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     }
 
     /**
-     * Writes the specified line to the log file
-     * and invoke {@link FileLoggerMirrorHandler#consumeOutput(String)} if is given.
+     * Writes the specified line to the log file and invokes
+     * {@link FileLoggerMirrorHandler#consumeOutput(String)} if a mirror handler is configured.
+     * A Unix line terminator (LF) is always used, regardless of the platform, so log files are
+     * identical across operating systems.
      *
      * @param line The message to log.
      */
     @Override
     public void consumeLine(String line) {
-        stream.println(line);
+        stream.print(line);
+        stream.print('\n');
         stream.flush();
     }
 
@@ -130,60 +136,140 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
         }
     }
 
+    /**
+     * A byte stream that normalizes line terminators to {@code \n}, forwards every normalized byte
+     * to the underlying output stream, and mirrors each flushed chunk to the
+     * {@link FileLoggerMirrorHandler} as a UTF-8 decoded string. Because this wrapper normalizes
+     * line terminators before forwarding, both the underlying file and the mirror always use the
+     * same {@code \n} separators, independent of the platform.
+     */
     private static class MirrorStreamWrapper extends OutputStream {
-        private OutputStream out;
+        private final OutputStream out;
 
         private final FileLoggerMirrorHandler mirrorHandler;
 
-        private StringBuilder lineBuffer;
+        private final ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream();
 
-        MirrorStreamWrapper(OutputStream outputStream, FileLoggerMirrorHandler mirrorHandler) {
-            this.out = outputStream;
+        private boolean lastWasCR;
+
+        MirrorStreamWrapper(OutputStream out, FileLoggerMirrorHandler mirrorHandler) {
+            this.out = out;
             this.mirrorHandler = mirrorHandler;
-            this.lineBuffer = new StringBuilder();
         }
 
         @Override
         public void write(int b) throws IOException {
-            out.write(b);
-            lineBuffer.append((char) (b));
+            writeByte(b);
         }
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            out.write(b, off, len);
-            lineBuffer.append(new String(b, off, len));
+            for (int i = off; i < off + len; i++) {
+                writeByte(b[i] & 0xFF);
+            }
+        }
+
+        private void writeByte(int b) throws IOException {
+            if (b == '\r') {
+                lastWasCR = true;
+                return;
+            }
+            if (lastWasCR) {
+                lastWasCR = false;
+                emit('\n');
+                if (b == '\n') {
+                    return;
+                }
+            }
+            emit(b);
+        }
+
+        private void emit(int b) throws IOException {
+            out.write(b);
+            lineBuffer.write(b);
         }
 
         @Override
         public void flush() throws IOException {
+            if (lastWasCR) {
+                lastWasCR = false;
+                emit('\n');
+            }
             out.flush();
 
-            int len = lineBuffer.length();
+            byte[] bytes = lineBuffer.toByteArray();
+            int len = bytes.length;
             if (len == 0) {
                 // nothing to log
                 return;
             }
 
-            // remove line end for log
-            while (len > 0 && (lineBuffer.charAt(len - 1) == '\n' || lineBuffer.charAt(len - 1) == '\r')) {
+            // remove the trailing line end, so each flushed chunk is logged as a single line
+            if (bytes[len - 1] == '\n') {
                 len--;
             }
-            lineBuffer.setLength(len);
 
-            mirrorHandler.consumeOutput(lineBuffer.toString());
+            mirrorHandler.consumeOutput(new String(bytes, 0, len, StandardCharsets.UTF_8));
 
             // clear buffer
-            lineBuffer = new StringBuilder();
+            lineBuffer.reset();
         }
 
         @Override
         public void close() throws IOException {
             flush();
-            if (out != null) {
-                out.close();
-                out = null;
+            out.close();
+        }
+    }
+
+    /**
+     * An output stream that normalizes line terminators to the Unix LF ({@code \n}) character,
+     * so the written content is independent of the platform on which it runs. A CRLF sequence
+     * ({@code \r\n}) or a lone carriage return ({@code \r}) is converted to a single LF.
+     */
+    private static class LineFeedNormalizer extends OutputStream {
+        private final OutputStream out;
+
+        private boolean lastWasCR;
+
+        LineFeedNormalizer(OutputStream out) {
+            this.out = out;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            writeByte(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            for (int i = off; i < off + len; i++) {
+                writeByte(b[i] & 0xFF);
             }
+        }
+
+        private void writeByte(int b) throws IOException {
+            if (b == '\r') {
+                lastWasCR = true;
+                return;
+            }
+            if (lastWasCR) {
+                lastWasCR = false;
+                out.write('\n');
+                if (b == '\n') {
+                    return;
+                }
+            }
+            out.write(b);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            if (lastWasCR) {
+                lastWasCR = false;
+                out.write('\n');
+            }
+            out.flush();
         }
     }
 

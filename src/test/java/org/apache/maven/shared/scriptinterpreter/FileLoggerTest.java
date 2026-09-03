@@ -19,11 +19,13 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,13 +35,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class FileLoggerTest {
 
-    public static final String EXPECTED_LOG = "Test1" + System.lineSeparator() + "Test2" + System.lineSeparator();
+    public static final String EXPECTED_LOG = "Test1\nTest2\n";
 
     @Test
     void nullOutputFileNoMirror() throws Exception {
         try (FileLogger fileLogger = new FileLogger(null)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertNull(fileLogger.getOutputFile());
@@ -52,7 +55,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertNull(fileLogger.getOutputFile());
@@ -72,7 +76,7 @@ public class FileLoggerTest {
             assertNull(fileLogger.getOutputFile());
         }
 
-        assertEquals("A" + System.lineSeparator(), mirrorHandler.getLoggedMessage());
+        assertEquals("A\n", mirrorHandler.getLoggedMessage());
     }
 
     @Test
@@ -81,7 +85,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(outputFile)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertEquals(outputFile, fileLogger.getOutputFile());
@@ -98,7 +103,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertEquals(outputFile, fileLogger.getOutputFile());
@@ -108,5 +114,51 @@ public class FileLoggerTest {
 
         assertTrue(outputFile.exists());
         assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+    }
+
+    /**
+     * Verifies that non-ASCII content written through the logger is encoded and decoded as UTF-8
+     * on both the mirror handler and the underlying file, independent of the platform default
+     * charset and line separator.
+     * "café" in UTF-8: {0x63, 0x61, 0x66, 0xC3, 0xA9, 0x0A}.
+     * A platform that decodes these bytes as ISO-8859-1 would produce "cafÃ©" instead of "café".
+     */
+    @Test
+    void mirrorAndFileShouldUseUtf8(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "utf8.log");
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
+            fileLogger.getPrintStream().write("café".getBytes(StandardCharsets.UTF_8));
+            fileLogger.getPrintStream().write('\n');
+            fileLogger.getPrintStream().flush();
+        }
+
+        assertEquals("café\n", mirrorHandler.getLoggedMessage());
+        assertTrue(outputFile.exists());
+        assertArrayEquals("café\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
+    }
+
+    /**
+     * Scripts running through the logger write with the platform's native line separator, which is
+     * {@code \r\n} on Windows. This verifies that both CRLF and a lone CR are normalized to a
+     * Unix LF ({@code \n}) in the file and the mirror, so the log content is identical on every
+     * platform and the mirror always matches the file.
+     */
+    @Test
+    void crLfAndCarriageReturnAreNormalizedToLf(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "crlf.log");
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
+            fileLogger.getPrintStream().print("line1\r\n");
+            fileLogger.getPrintStream().print("line2\r");
+            fileLogger.getPrintStream().print("\n");
+            fileLogger.consumeLine("line3");
+        }
+
+        assertEquals("line1\nline2\nline3\n", mirrorHandler.getLoggedMessage());
+        assertArrayEquals(
+                "line1\nline2\nline3\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
     }
 }
