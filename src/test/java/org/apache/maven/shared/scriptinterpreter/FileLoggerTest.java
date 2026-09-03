@@ -138,4 +138,27 @@ public class FileLoggerTest {
         assertTrue(outputFile.exists());
         assertArrayEquals("café\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
     }
+
+    /**
+     * Scripts running through the logger write with the platform's native line separator, which is
+     * {@code \r\n} on Windows. This verifies that both CRLF and a lone CR are normalized to a
+     * Unix LF ({@code \n}) in the file and the mirror, so the log content is identical on every
+     * platform and the mirror always matches the file.
+     */
+    @Test
+    void crLfAndCarriageReturnAreNormalizedToLf(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "crlf.log");
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
+            fileLogger.getPrintStream().print("line1\r\n");
+            fileLogger.getPrintStream().print("line2\r");
+            fileLogger.getPrintStream().print("\n");
+            fileLogger.consumeLine("line3");
+        }
+
+        assertEquals("line1\nline2\nline3\n", mirrorHandler.getLoggedMessage());
+        assertArrayEquals(
+                "line1\nline2\nline3\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
+    }
 }
