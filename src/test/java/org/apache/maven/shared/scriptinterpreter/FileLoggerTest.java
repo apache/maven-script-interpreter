@@ -41,7 +41,8 @@ public class FileLoggerTest {
     void nullOutputFileNoMirror() throws Exception {
         try (FileLogger fileLogger = new FileLogger(null)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertNull(fileLogger.getOutputFile());
@@ -54,7 +55,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(null, mirrorHandler)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertNull(fileLogger.getOutputFile());
@@ -83,7 +85,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(outputFile)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertEquals(outputFile, fileLogger.getOutputFile());
@@ -100,7 +103,8 @@ public class FileLoggerTest {
 
         try (FileLogger fileLogger = new FileLogger(outputFile, mirrorHandler)) {
             fileLogger.consumeLine("Test1");
-            fileLogger.getPrintStream().println("Test2");
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
             fileLogger.getPrintStream().flush();
 
             assertEquals(outputFile, fileLogger.getOutputFile());

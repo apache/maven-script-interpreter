@@ -39,8 +39,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     private File file;
 
     /**
-     * The underlying file stream this logger writes to. It is always UTF-8 encoded so that
-     * output is independent of the platform default charset.
+     * The underlying file stream this logger writes to.
      */
     private PrintStream stream;
 
