@@ -109,4 +109,24 @@ public class FileLoggerTest {
         assertTrue(outputFile.exists());
         assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
     }
+
+    @Test
+    void bareFilenameNoParent() throws Exception {
+        File outputFile = new File("filelogger-204-bare.log");
+        assertNull(outputFile.getParent());
+        try {
+            try (FileLogger fileLogger = new FileLogger(outputFile)) {
+                fileLogger.consumeLine("Test1");
+                fileLogger.getPrintStream().println("Test2");
+                fileLogger.getPrintStream().flush();
+
+                assertEquals(outputFile, fileLogger.getOutputFile());
+            }
+
+            assertTrue(outputFile.exists());
+            assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+        } finally {
+            Files.deleteIfExists(outputFile.toPath());
+        }
+    }
 }

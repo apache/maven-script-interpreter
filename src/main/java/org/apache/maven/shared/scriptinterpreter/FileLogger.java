@@ -65,7 +65,10 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
 
         if (outputFile != null) {
             Path outputPath = outputFile.toPath();
-            Files.createDirectories(outputPath.getParent());
+            Path parent = outputPath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             outputStream = createOutputStream(outputPath);
         } else {
             outputStream = new NullOutputStream();
