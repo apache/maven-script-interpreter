@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -56,7 +57,7 @@ public class ScriptRunner implements Closeable {
     private final Map<String, Object> globalVariables;
 
     /**
-     * The file encoding of the hook scripts or <code>null</code> to use platform encoding.
+     * The file encoding of the hook scripts or <code>null</code> to use UTF-8.
      */
     private String encoding;
 
@@ -119,8 +120,7 @@ public class ScriptRunner implements Closeable {
     /**
      * Sets the file encoding of the hook scripts.
      *
-     * @param encoding The file encoding of the hook scripts, may be <code>null</code> or empty to use the platform's
-     *                 default encoding.
+     * @param encoding The file encoding of the hook scripts, may be <code>null</code> or empty to use UTF-8.
      */
     public void setScriptEncoding(String encoding) {
         this.encoding = encoding != null && !encoding.isEmpty() ? encoding : null;
@@ -202,7 +202,7 @@ public class ScriptRunner implements Closeable {
             if (encoding != null) {
                 script = new String(bytes, encoding);
             } else {
-                script = new String(bytes);
+                script = new String(bytes, StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
             String errorMessage =
