@@ -19,6 +19,7 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "verify", buildContext(), fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/bsh-test/verify.bsh").getPath()));
         assertTrue(logContent.contains("foo=bar"));
         assertTrue(logContent.contains("globalVar=Yeah baby it's rocks"));
@@ -72,7 +73,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-null", null, fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/bsh-test/return-null.bsh").getPath()));
         assertTrue(logContent.contains("ok with null result"));
         assertEquals(logContent, mirrorHandler.getLoggedMessage());
@@ -133,7 +134,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test", new File("src/test/resources/bsh-test/verify.bsh"), buildContext(), fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/bsh-test/verify.bsh").getPath()));
         assertTrue(logContent.contains("foo=bar"));
 
@@ -152,7 +153,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "verify", buildContext(), fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/groovy-test/verify.groovy").getPath()));
         assertTrue(logContent.contains("foo=bar"));
         assertTrue(logContent.contains("globalVar=Yeah baby it's rocks"));
@@ -172,7 +173,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "return-null", null, fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/groovy-test/return-null.groovy").getPath()));
         assertTrue(logContent.contains("ok with null result"));
         assertEquals(logContent, mirrorHandler.getLoggedMessage());
@@ -217,7 +218,7 @@ class ScriptRunnerTest {
 
         assertEquals(false, catchedException.getResult());
         assertEquals("The test returned false.", catchedException.getMessage());
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/groovy-test/return-false.groovy").getPath()));
         assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
@@ -234,7 +235,7 @@ class ScriptRunnerTest {
                     "test", new File("src/test/resources/groovy-test/verify.groovy"), buildContext(), fileLogger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains(new File("src/test/resources/groovy-test/verify.groovy").getPath()));
         assertTrue(logContent.contains("foo=bar"));
 
@@ -259,7 +260,7 @@ class ScriptRunnerTest {
             scriptRunner.run("test classpath 2", basedir, "class-path2", context, logger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains("wireMockServer started with port="));
         assertTrue(logContent.contains("wireMockServer stopped"));
     }
@@ -284,7 +285,7 @@ class ScriptRunnerTest {
             scriptRunner.run("utf8-test", new File("src/test/resources/groovy-test/utf8-test.groovy"), context, logger);
         }
 
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains("expected=café"));
         assertTrue(logContent.contains("actual=café"));
     }
