@@ -264,6 +264,31 @@ class ScriptRunnerTest {
         assertTrue(logContent.contains("wireMockServer stopped"));
     }
 
+    /**
+     * Verifies that a Groovy script containing non-ASCII characters (UTF-8 encoded)
+     * is decoded correctly when no explicit encoding is set. The script file
+     * utf8-test.groovy contains the UTF-8 string literal "café" and asserts it
+     * matches the expected value, returning true on success.
+     *
+     * @see <a href="https://github.com/apache/maven-script-interpreter/issues/206">#206</a>
+     */
+    @Test
+    void groovyUtf8ScriptShouldDecodeCorrectly() throws Exception {
+        File logFile = new File(tempDir, "build.log");
+
+        Map<String, Object> context = new HashMap<>();
+        context.put("expected", "café");
+
+        try (FileLogger logger = new FileLogger(logFile);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("utf8-test", new File("src/test/resources/groovy-test/utf8-test.groovy"), context, logger);
+        }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        assertTrue(logContent.contains("expected=café"));
+        assertTrue(logContent.contains("actual=café"));
+    }
+
     private Map<String, ?> buildContext() {
         Map<String, Object> context = new HashMap<>();
         context.put("foo", "bar");
