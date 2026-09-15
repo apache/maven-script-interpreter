@@ -39,8 +39,55 @@ import org.codehaus.groovy.tools.RootLoader;
  */
 class GroovyScriptInterpreter implements ScriptInterpreter {
 
-    private final RootLoader childFirstLoader =
-            new RootLoader(new URL[] {}, Thread.currentThread().getContextClassLoader());
+    /**
+     * A child-first class loader that makes one exception: Groovy's own classes always come from the parent. The
+     * scripts are compiled by the Groovy runtime on the parent class path, so a Groovy of a different version on the
+     * caller-supplied class path would otherwise shadow it and the compiled script could not be cast to
+     * {@link groovy.lang.GroovyObject}.
+     */
+    static class GroovyParentFirstRootLoader extends RootLoader {
+
+        GroovyParentFirstRootLoader(ClassLoader parent) {
+            super(new URL[] {}, parent);
+        }
+
+        /**
+         * Indicates whether the given class belongs to the Groovy runtime and must therefore be loaded from the
+         * parent class loader.
+         *
+         * @param name The binary name of the class, must not be <code>null</code>.
+         * @return <code>true</code> if the class must be loaded parent-first.
+         */
+        static boolean isGroovyRuntimeClass(String name) {
+            return name.startsWith("groovy.")
+                    || name.startsWith("org.codehaus.groovy.")
+                    || name.startsWith("org.apache.groovy.");
+        }
+
+        @Override
+        protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            if (isGroovyRuntimeClass(name)) {
+                Class<?> c = findLoadedClass(name);
+                if (c == null && getParent() != null) {
+                    try {
+                        c = getParent().loadClass(name);
+                    } catch (ClassNotFoundException e) {
+                        // not provided by the parent, fall back to the regular child-first lookup
+                    }
+                }
+                if (c != null) {
+                    if (resolve) {
+                        resolveClass(c);
+                    }
+                    return c;
+                }
+            }
+            return super.loadClass(name, resolve);
+        }
+    }
+
+    private final GroovyParentFirstRootLoader childFirstLoader =
+            new GroovyParentFirstRootLoader(Thread.currentThread().getContextClassLoader());
 
     private String targetBytecode;
 
