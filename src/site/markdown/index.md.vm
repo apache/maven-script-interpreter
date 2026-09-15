@@ -84,9 +84,12 @@ try (ScriptRunner scriptRunner = new ScriptRunner()) {
 
 #[[### Global variables]]#
 
-Your scripts will have by default two global variables:
+Your scripts will have by default three global variables:
 
-- `basedir`: the base directory of your script
+- `basedir`: the base directory passed to `run(...)`, which is the project directory. For the `run(...)` overload that
+  takes a script file and no base directory, it is the directory containing the script.
+- `scriptdir`: the directory containing the script, which differs from `basedir` when the script lives in a
+  subdirectory of the project
 - `context`: the build context (see below)
 
 You can add more global variables as it.
