@@ -18,17 +18,28 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests the Groovy interpreter facade.
@@ -36,6 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Benjamin Bentmann
  */
 class GroovyScriptInterpreterTest {
+
+    @TempDir
+    private File tempDir;
+
     @Test
     void evaluateScript() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -107,6 +122,93 @@ class GroovyScriptInterpreterTest {
                     interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
         }
         assertEquals("Test", out.toString());
+    }
+
+    /**
+     * A Groovy of a different version on the caller-supplied class path must not shadow the Groovy the scripts are
+     * compiled with, while every other class stays child-first.
+     *
+     * @see <a href="https://github.com/apache/maven-invoker-plugin/issues/642">maven-invoker-plugin#642</a>
+     */
+    @Test
+    void groovyClassesAreLoadedParentFirstOtherClassesChildFirst() throws Exception {
+        File classesDir = compileShadowClasses();
+
+        try (GroovyScriptInterpreter.GroovyParentFirstRootLoader loader =
+                new GroovyScriptInterpreter.GroovyParentFirstRootLoader(
+                        getClass().getClassLoader())) {
+            loader.addURL(classesDir.toURI().toURL());
+
+            assertSame(groovy.lang.Binding.class, loader.loadClass("groovy.lang.Binding"));
+
+            Class<?> shadowed = loader.loadClass(FilenameUtils.class.getName());
+            assertNotSame(FilenameUtils.class, shadowed);
+            assertSame(loader, shadowed.getClassLoader());
+        }
+    }
+
+    /**
+     * A script must still compile and run when a stale Groovy sits on the supplied class path.
+     */
+    @Test
+    void evaluateScriptWithShadowedGroovyOnClassPath() throws Exception {
+        File classesDir = compileShadowClasses();
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            interpreter.setClassPath(Collections.singletonList(classesDir.getAbsolutePath()));
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("print \"Test\"\nreturn true", null, new PrintStream(out)));
+        }
+        assertEquals("Test", out.toString());
+    }
+
+    /**
+     * Compiles stripped-down copies of <code>groovy.lang.Binding</code>, <code>groovy.lang.Script</code> and
+     * <code>org.apache.commons.io.FilenameUtils</code>, all of which also exist on the parent class path, into a
+     * directory usable as an additional class path entry. This stands in for the incompatible Groovy version that
+     * <code>addTestClassPath</code> puts in front of the interpreter's own.
+     */
+    private File compileShadowClasses() throws Exception {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        assumeTrue(compiler != null, "JDK compiler is not available");
+
+        File sourceDir = new File(tempDir, "src");
+        File classesDir = new File(tempDir, "classes");
+        assertTrue(classesDir.mkdirs() || classesDir.isDirectory());
+
+        File binding = writeSource(
+                sourceDir, "groovy/lang/Binding.java", "package groovy.lang;\n\npublic class Binding {\n}\n");
+        File script =
+                writeSource(sourceDir, "groovy/lang/Script.java", "package groovy.lang;\n\npublic class Script {\n}\n");
+        File filenameUtils = writeSource(
+                sourceDir,
+                "org/apache/commons/io/FilenameUtils.java",
+                "package org.apache.commons.io;\n\npublic class FilenameUtils {\n}\n");
+
+        assertTrue(
+                compiler.run(
+                                null,
+                                null,
+                                null,
+                                "-d",
+                                classesDir.getAbsolutePath(),
+                                binding.getAbsolutePath(),
+                                script.getAbsolutePath(),
+                                filenameUtils.getAbsolutePath())
+                        == 0,
+                "compilation of the shadowing classes failed");
+
+        return classesDir;
+    }
+
+    private File writeSource(File sourceDir, String relativePath, String content) throws Exception {
+        File sourceFile = new File(sourceDir, relativePath);
+        assertTrue(sourceFile.getParentFile().mkdirs()
+                || sourceFile.getParentFile().isDirectory());
+        Files.write(sourceFile.toPath(), content.getBytes(StandardCharsets.UTF_8));
+        return sourceFile;
     }
 
     @Test
