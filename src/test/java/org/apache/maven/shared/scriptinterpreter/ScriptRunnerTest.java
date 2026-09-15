@@ -265,6 +265,50 @@ class ScriptRunnerTest {
     }
 
     /**
+     * A script living in a subdirectory of the project must still see the project directory as <code>basedir</code>,
+     * with its own directory available as <code>scriptdir</code>.
+     *
+     * @see <a href="https://github.com/apache/maven-invoker-plugin/issues/299">maven-invoker-plugin#299</a>
+     */
+    @ValueSource(strings = {"bsh", "groovy"})
+    @ParameterizedTest
+    void scriptInSubDirectoryShouldSeeProjectBasedir(String scriptType) throws Exception {
+        File logFile = new File(tempDir, "build.log");
+        File basedir = new File("src/test/resources/basedir-test");
+
+        Map<String, Object> context = new HashMap<>();
+
+        try (FileLogger logger = new FileLogger(logFile);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", basedir, "scripts/verify." + scriptType, context, logger);
+        }
+
+        assertEquals(basedir, context.get("basedir"));
+        assertEquals(new File(basedir, "scripts"), context.get("scriptdir"));
+    }
+
+    /**
+     * The overload without a project directory has no better candidate, so both variables point at the script's own
+     * directory.
+     */
+    @ValueSource(strings = {"bsh", "groovy"})
+    @ParameterizedTest
+    void scriptRunWithoutBasedirShouldUseScriptDirectory(String scriptType) throws Exception {
+        File logFile = new File(tempDir, "build.log");
+        File scriptDir = new File("src/test/resources/basedir-test/scripts");
+
+        Map<String, Object> context = new HashMap<>();
+
+        try (FileLogger logger = new FileLogger(logFile);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", new File(scriptDir, "verify." + scriptType), context, logger);
+        }
+
+        assertEquals(scriptDir, context.get("basedir"));
+        assertEquals(scriptDir, context.get("scriptdir"));
+    }
+
+    /**
      * Verifies that a Groovy script containing non-ASCII characters (UTF-8 encoded)
      * is decoded correctly when no explicit encoding is set. The script file
      * utf8-test.groovy contains the UTF-8 string literal "café" and asserts it
