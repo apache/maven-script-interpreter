@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Olivier Lamy
@@ -81,44 +82,35 @@ class ScriptRunnerTest {
     @Test
     void failedBeanshellShouldCreateProperLogsMessage() throws Exception {
         File logFile = new File(tempDir, "build.log");
-
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
-
-        Exception catchedException = null;
 
         try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "failed", buildContext(), fileLogger);
-        } catch (ScriptEvaluationException e) {
-            catchedException = e;
+            fail();
+        } catch (ScriptEvaluationException expected) {
+            String logContent = new String(Files.readAllBytes(logFile.toPath()));
+            assertTrue(logContent.contains(new File("src/test/resources/bsh-test/failed.bsh").getPath()));
+            assertEquals(logContent, mirrorHandler.getLoggedMessage());
         }
-
-        assertNotNull(catchedException);
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
-        assertTrue(logContent.contains(new File("src/test/resources/bsh-test/failed.bsh").getPath()));
-        assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
 
     @Test
     void beanshellReturnedNotTrueShouldThrowException() throws Exception {
         File logFile = new File(tempDir, "build.log");
-
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
-
-        ScriptReturnException catchedException = null;
 
         try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-not-true", null, fileLogger);
-        } catch (ScriptReturnException e) {
-            catchedException = e;
+            fail();
+        } catch (ScriptReturnException expected) {
+            assertEquals("Not true value", expected.getResult());
+            assertEquals("The test returned Not true value.", expected.getMessage());
+            String logContent = new String(Files.readAllBytes(logFile.toPath()));
+            assertTrue(logContent.contains(new File("src/test/resources/bsh-test/return-not-true.bsh").getPath()));
+            assertEquals(logContent, mirrorHandler.getLoggedMessage());
         }
-
-        assertEquals("Not true value", catchedException.getResult());
-        assertEquals("The test returned Not true value.", catchedException.getMessage());
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
-        assertTrue(logContent.contains(new File("src/test/resources/bsh-test/return-not-true.bsh").getPath()));
-        assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
 
     @Test
@@ -181,45 +173,34 @@ class ScriptRunnerTest {
     @Test
     void failedGroovyShouldCreateProperLogsMessage() throws Exception {
         File logFile = new File(tempDir, "build.log");
-
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
-
-        Exception catchedException = null;
 
         try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run("test", new File("src/test/resources/groovy-test"), "failed", buildContext(), fileLogger);
-        } catch (ScriptEvaluationException e) {
-            catchedException = e;
+        } catch (ScriptEvaluationException expected) {
+            String logContent = new String(Files.readAllBytes(logFile.toPath()));
+            assertTrue(logContent.contains(new File("src/test/resources/groovy-test/failed.groovy").getPath()));
+            assertEquals(logContent, mirrorHandler.getLoggedMessage());
         }
-
-        assertNotNull(catchedException);
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
-        assertTrue(logContent.contains(new File("src/test/resources/groovy-test/failed.groovy").getPath()));
-        assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
 
     @Test
     void groovyReturnedFalseShouldThrowException() throws Exception {
         File logFile = new File(tempDir, "build.log");
-
         TestMirrorHandler mirrorHandler = new TestMirrorHandler();
-
-        ScriptReturnException catchedException = null;
 
         try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
             scriptRunner.run(
                     "test", new File("src/test/resources/groovy-test"), "return-false", buildContext(), fileLogger);
-        } catch (ScriptReturnException e) {
-            catchedException = e;
+        } catch (ScriptReturnException expected) {
+            assertEquals(false, expected.getResult());
+            assertEquals("The test returned false.", expected.getMessage());
+            String logContent = new String(Files.readAllBytes(logFile.toPath()));
+            assertTrue(logContent.contains(new File("src/test/resources/groovy-test/return-false.groovy").getPath()));
+            assertEquals(logContent, mirrorHandler.getLoggedMessage());
         }
-
-        assertEquals(false, catchedException.getResult());
-        assertEquals("The test returned false.", catchedException.getMessage());
-        String logContent = new String(Files.readAllBytes(logFile.toPath()));
-        assertTrue(logContent.contains(new File("src/test/resources/groovy-test/return-false.groovy").getPath()));
-        assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
 
     @Test
