@@ -128,6 +128,10 @@ public class ScriptRunner implements Closeable {
 
     /**
      * Runs the specified hook script (after resolution).
+     * <p>
+     * The script is given the global variables <code>basedir</code>, holding the project base directory passed in
+     * here, and <code>scriptdir</code>, holding the directory the script file itself lives in. The two differ when
+     * <code>relativeScriptPath</code> points into a subdirectory of the project.
      *
      * @param scriptDescription The description of the script to use for logging, must not be <code>null</code>.
      * @param basedir The base directory of the project, must not be <code>null</code>.
@@ -161,11 +165,14 @@ public class ScriptRunner implements Closeable {
             return;
         }
 
-        executeRun(scriptDescription, scriptFile, context, logger);
+        executeRun(scriptDescription, basedir, scriptFile, context, logger);
     }
 
     /**
      * Runs the specified hook script.
+     * <p>
+     * As no project base directory is passed in, both the <code>basedir</code> and the <code>scriptdir</code> global
+     * variables are set to the directory the script file lives in.
      *
      * @param scriptDescription The description of the script to use for logging, must not be <code>null</code>.
      * @param scriptFile The path to the script, may be <code>null</code> to skip the script execution.
@@ -183,11 +190,15 @@ public class ScriptRunner implements Closeable {
             return;
         }
 
-        executeRun(scriptDescription, scriptFile, context, logger);
+        executeRun(scriptDescription, scriptFile.getParentFile(), scriptFile, context, logger);
     }
 
     private void executeRun(
-            final String scriptDescription, File scriptFile, final Map<String, ?> context, final ExecutionLogger logger)
+            final String scriptDescription,
+            final File basedir,
+            File scriptFile,
+            final Map<String, ?> context,
+            final ExecutionLogger logger)
             throws IOException, ScriptException {
         ScriptInterpreter interpreter = getInterpreter(scriptFile);
         if (LOG.isDebugEnabled()) {
@@ -219,7 +230,8 @@ public class ScriptRunner implements Closeable {
             PrintStream out = (logger != null) ? logger.getPrintStream() : null;
 
             Map<String, Object> scriptVariables = new HashMap<>(this.globalVariables);
-            scriptVariables.put("basedir", scriptFile.getParentFile());
+            scriptVariables.put("basedir", basedir);
+            scriptVariables.put("scriptdir", scriptFile.getParentFile());
             scriptVariables.put("context", context);
 
             synchronized (LOCK) {
