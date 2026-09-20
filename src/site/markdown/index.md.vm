@@ -49,7 +49,7 @@ For example, if you want to use [**Grape**](https://docs.groovy-lang.org/latest/
 Using ScriptRunner
 ------------------
 
-`ScriptRunner` class will detect the script file to run based on supported extensions (`.bsh`, `.groovy`).
+`ScriptRunner` class will detect the script file to run based on supported extensions (`.bsh`, `.groovy`). A script with any other extension runs as Groovy since 1.10; up to 1.9 it ran as BeanShell.
 
 This class will search in the provided directory the script with the provided fileName and the supported extensions.
 

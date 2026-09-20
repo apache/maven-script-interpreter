@@ -153,6 +153,24 @@ class ScriptRunnerTest {
     }
 
     @Test
+    void unknownExtensionRunsAsGroovy() throws Exception {
+        File logFile = new File(tempDir, "build.log");
+
+        TestMirrorHandler mirrorHandler = new TestMirrorHandler();
+
+        try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.setGlobalVariable("globalVar", "Yeah baby it's rocks");
+            scriptRunner.run(
+                    "test", new File("src/test/resources/groovy-test/verify.script"), buildContext(), fileLogger);
+        }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        assertTrue(logContent.contains("foo=bar"));
+        assertTrue(logContent.contains("globalVar=Yeah baby it's rocks"));
+    }
+
+    @Test
     void groovyReturnedNullShouldBeOk() throws Exception {
         File logFile = new File(tempDir, "build.log");
 

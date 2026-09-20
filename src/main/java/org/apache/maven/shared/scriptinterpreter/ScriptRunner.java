@@ -283,8 +283,8 @@ public class ScriptRunner implements Closeable {
 
     /**
      * Determines the script interpreter for the specified script file by looking at its file extension. In this
-     * context, file extensions are considered case-insensitive. For backward compatibility with plugin versions 1.2-,
-     * the BeanShell interpreter will be used for any unrecognized extension.
+     * context, file extensions are considered case-insensitive. Groovy is used for any unrecognized extension; up to
+     * 1.9 that was BeanShell, which is deprecated and becomes an optional dependency in 1.11.
      *
      * @param scriptFile The script file for which to determine an interpreter, must not be <code>null</code>.
      * @return The script interpreter for the file, never <code>null</code>.
@@ -293,7 +293,11 @@ public class ScriptRunner implements Closeable {
         String ext = FilenameUtils.getExtension(scriptFile.getName()).toLowerCase(Locale.ENGLISH);
         ScriptInterpreter interpreter = scriptInterpreters.get(ext);
         if (interpreter == null) {
-            interpreter = scriptInterpreters.get("bsh");
+            LOG.warn(
+                    "No interpreter registered for the extension of {}, running it as Groovy; up to"
+                            + " maven-script-interpreter 1.9 such scripts ran as BeanShell",
+                    scriptFile);
+            interpreter = scriptInterpreters.get("groovy");
         }
         return interpreter;
     }
