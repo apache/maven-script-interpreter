@@ -37,7 +37,10 @@ import bsh.TargetError;
  * Provides a facade to evaluate BeanShell scripts.
  *
  * @author Benjamin Bentmann
+ * @deprecated since 1.10: BeanShell scripts are deprecated, port them to Groovy. BeanShell becomes an optional
+ *             dependency in 1.11 and support for it will be removed later (apache/maven#13207).
  */
+@Deprecated
 class BeanShellScriptInterpreter implements ScriptInterpreter {
 
     private static class ChildFirstURLClassLoader extends URLClassLoader {
