@@ -81,7 +81,7 @@ public class FileLoggerTest {
 
     @Test
     void outputFileNoMirror(@TempDir File tempDir) throws Exception {
-        File outputFile = new File(tempDir, "/target/test.log");
+        File outputFile = new File(tempDir, "target/test.log");
 
         try (FileLogger fileLogger = new FileLogger(outputFile)) {
             fileLogger.consumeLine("Test1");
@@ -93,7 +93,7 @@ public class FileLoggerTest {
         }
 
         assertTrue(outputFile.exists());
-        assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+        assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -113,7 +113,7 @@ public class FileLoggerTest {
         assertEquals(EXPECTED_LOG, mirrorHandler.getLoggedMessage());
 
         assertTrue(outputFile.exists());
-        assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+        assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8));
     }
 
     /**
@@ -176,7 +176,7 @@ public class FileLoggerTest {
             }
 
             assertTrue(outputFile.exists());
-            assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath())));
+            assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8));
         } finally {
             Files.deleteIfExists(outputFile.toPath());
         }
