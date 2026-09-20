@@ -207,7 +207,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
                 return;
             }
 
-            // remove the trailing line end, so each flushed chunk is logged as a single line
+            // remove one trailing LF before mirroring (a flushed chunk may still contain embedded newlines)
             if (bytes[len - 1] == '\n') {
                 len--;
             }
