@@ -274,6 +274,12 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
             }
             out.flush();
         }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+            out.close();
+        }
     }
 
     private static class NullOutputStream extends OutputStream {
