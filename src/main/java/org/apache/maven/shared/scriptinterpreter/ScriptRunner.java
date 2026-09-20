@@ -62,8 +62,10 @@ public class ScriptRunner implements Closeable {
     private String encoding;
 
     /**
-     * Creates a new script runner with BSH and Groovy interpreters.
+     * Creates a new script runner with BSH and Groovy interpreters. BeanShell is deprecated: it becomes an optional
+     * dependency in 1.11 and support for it will be removed later.
      */
+    @SuppressWarnings("deprecation")
     public ScriptRunner() {
         scriptInterpreters = new LinkedHashMap<>();
         scriptInterpreters.put("bsh", new BeanShellScriptInterpreter());
@@ -205,6 +207,12 @@ public class ScriptRunner implements Closeable {
             String name = interpreter.getClass().getName();
             name = name.substring(name.lastIndexOf('.') + 1);
             LOG.debug("Running script with {} :{}", name, scriptFile);
+        }
+        if (interpreter instanceof BeanShellScriptInterpreter) {
+            LOG.warn(
+                    "BeanShell scripts are deprecated, port {} to Groovy; BeanShell becomes an optional dependency"
+                            + " in maven-script-interpreter 1.11 and support for it will be removed later",
+                    scriptFile);
         }
 
         String script;
