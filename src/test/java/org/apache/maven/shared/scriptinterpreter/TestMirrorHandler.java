@@ -36,6 +36,6 @@ class TestMirrorHandler implements FileLoggerMirrorHandler {
     @Override
     public void consumeOutput(String message) {
         loggedMessage.append(message);
-        loggedMessage.append(System.lineSeparator());
+        loggedMessage.append('\n');
     }
 }
