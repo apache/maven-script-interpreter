@@ -140,33 +140,24 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
     @Override
     public Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException {
-        PrintStream origOut = System.out;
-        PrintStream origErr = System.err;
-
         ClassLoader curentClassLoader = Thread.currentThread().getContextClassLoader();
-        try {
-
-            if (scriptOutput != null) {
-                System.setErr(scriptOutput);
-                System.setOut(scriptOutput);
-            }
-
+        try (ScriptOutputRedirect redirect = scriptOutput != null ? ScriptOutputRedirect.to(scriptOutput) : null) {
             CompilerConfiguration compilerConfiguration = new CompilerConfiguration(CompilerConfiguration.DEFAULT);
             if (targetBytecode != null) {
                 compilerConfiguration.setTargetBytecode(normalizeTargetBytecode(targetBytecode));
             }
-
-            GroovyShell interpreter =
-                    new GroovyShell(childFirstLoader, new Binding(globalVariables), compilerConfiguration);
-
+            Binding binding = new Binding(globalVariables);
+            if (scriptOutput != null) {
+                // println/print/printf in a Groovy script go to the "out" variable when one is bound
+                binding.setVariable("out", scriptOutput);
+            }
+            GroovyShell interpreter = new GroovyShell(childFirstLoader, binding, compilerConfiguration);
             Thread.currentThread().setContextClassLoader(childFirstLoader);
             return interpreter.evaluate(script);
         } catch (Throwable e) {
             throw new ScriptEvaluationException(e);
         } finally {
             Thread.currentThread().setContextClassLoader(curentClassLoader);
-            System.setErr(origErr);
-            System.setOut(origOut);
         }
     }
 

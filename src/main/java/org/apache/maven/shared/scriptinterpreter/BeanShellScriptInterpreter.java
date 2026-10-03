@@ -108,19 +108,12 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
     @Override
     public Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException {
-        PrintStream origOut = System.out;
-        PrintStream origErr = System.err;
-
-        try {
+        try (ScriptOutputRedirect redirect = scriptOutput != null ? ScriptOutputRedirect.to(scriptOutput) : null) {
             Interpreter engine = new Interpreter();
-
             if (scriptOutput != null) {
-                System.setErr(scriptOutput);
-                System.setOut(scriptOutput);
                 engine.setErr(scriptOutput);
                 engine.setOut(scriptOutput);
             }
-
             if (!Capabilities.haveAccessibility()) {
                 try {
                     Capabilities.setAccessibility(true);
@@ -130,9 +123,7 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                     }
                 }
             }
-
             engine.setClassLoader(classLoader);
-
             if (globalVariables != null) {
                 for (Map.Entry<String, ?> entry : globalVariables.entrySet()) {
                     try {
@@ -155,9 +146,6 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
             } finally {
                 Thread.currentThread().setContextClassLoader(curentClassLoader);
             }
-        } finally {
-            System.setErr(origErr);
-            System.setOut(origOut);
         }
     }
 
