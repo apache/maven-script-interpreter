@@ -30,8 +30,7 @@
   <version>1.10-SNAPSHOT</version>
 
   <name>Apache Maven Script Interpreter</name>
-  <description>This component provides some utilities to interpret/execute some scripts for various implementations:
-        groovy or beanshell.</description>
+  <description>Utilities for Maven plugins and Java applications that execute Groovy scripts at runtime, with support for script discovery, context variables, additional classpath entries, and captured script output. BeanShell script support is deprecated.</description>
 
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/maven-script-interpreter.git</connection>
