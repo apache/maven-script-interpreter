@@ -69,7 +69,7 @@ In order to do something more with script output, eg. log by your application yo
 
 ```java
 class MyMirrorHandler implements FileLoggerMirrorHandler {
-    void consumeOutput(String message) {
+    public void consumeOutput(String message) {
         // this method is invoked every time when flush occurs on the underlying stream.
     }
 }
