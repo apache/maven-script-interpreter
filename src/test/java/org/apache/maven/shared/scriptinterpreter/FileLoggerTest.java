@@ -19,8 +19,12 @@
 package org.apache.maven.shared.scriptinterpreter;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,6 +32,8 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -162,6 +168,38 @@ public class FileLoggerTest {
                 "line1\nline2\nline3\n".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outputFile.toPath()));
     }
 
+    /**
+     * A {@link java.io.PrintStream} never reports a failed write through an exception; it only
+     * sets an internal error flag that {@link FileLogger#consumeLine(String)} never checked,
+     * silently losing the message. Verifies that a write failure is now reported instead.
+     */
+    @Test
+    void consumeLineReportsAFailedWrite(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "test.log");
+
+        try (FailingFileLogger fileLogger = new FailingFileLogger(outputFile)) {
+            assertThrows(UncheckedIOException.class, () -> fileLogger.consumeLine("Test1"));
+        }
+    }
+
+    @Test
+    void getOutputStreamReturnsTheStreamWrappedByGetPrintStream(@TempDir File tempDir) throws Exception {
+        File outputFile = new File(tempDir, "test.log");
+
+        try (FileLogger fileLogger = new FileLogger(outputFile)) {
+            OutputStream outputStream = fileLogger.getOutputStream();
+            outputStream.write("Test1\n".getBytes(StandardCharsets.UTF_8));
+
+            fileLogger.getPrintStream().print("Test2");
+            fileLogger.getPrintStream().print('\n');
+            fileLogger.getPrintStream().flush();
+
+            assertSame(outputStream, fileLogger.getOutputStream());
+        }
+
+        assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8));
+    }
+
     @Test
     void bareFilenameNoParent() throws Exception {
         File outputFile = new File("filelogger-204-bare.log");
@@ -179,6 +217,26 @@ public class FileLoggerTest {
             assertEquals(EXPECTED_LOG, new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8));
         } finally {
             Files.deleteIfExists(outputFile.toPath());
+        }
+    }
+
+    /**
+     * A {@link FileLogger} whose underlying stream always fails to write, simulating a disk-full
+     * or permission error on the real log file.
+     */
+    private static class FailingFileLogger extends FileLogger {
+        FailingFileLogger(File outputFile) throws IOException {
+            super(outputFile);
+        }
+
+        @Override
+        protected OutputStream createOutputStream(Path outputPath) {
+            return new OutputStream() {
+                @Override
+                public void write(int b) throws IOException {
+                    throw new IOException("disk full");
+                }
+            };
         }
     }
 }
