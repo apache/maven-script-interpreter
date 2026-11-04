@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -39,9 +41,17 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     private File file;
 
     /**
-     * The underlying file stream this logger writes to.
+     * The underlying file stream this logger writes to. Writing through this stream, instead of
+     * through a {@link PrintStream}, lets {@link #consumeLine(String)} detect a failed write
+     * instead of silently losing it.
      */
-    private PrintStream stream;
+    private final OutputStream outputStream;
+
+    /**
+     * Lazily created {@link PrintStream} view of {@link #outputStream}, returned by the deprecated
+     * {@link #getPrintStream()}.
+     */
+    private PrintStream printStream;
 
     /**
      * Creates a new logger that writes to the specified file.
@@ -63,7 +73,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     public FileLogger(File outputFile, FileLoggerMirrorHandler mirrorHandler) throws IOException {
         this.file = outputFile;
 
-        OutputStream outputStream;
+        OutputStream rawStream;
 
         if (outputFile != null) {
             Path outputPath = outputFile.toPath();
@@ -71,16 +81,15 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            outputStream = createOutputStream(outputPath);
+            rawStream = createOutputStream(outputPath);
         } else {
-            outputStream = new NullOutputStream();
+            rawStream = new NullOutputStream();
         }
 
         if (mirrorHandler != null) {
-            this.stream = new PrintStream(
-                    new MirrorStreamWrapper(outputStream, mirrorHandler), false, StandardCharsets.UTF_8.name());
+            this.outputStream = new MirrorStreamWrapper(rawStream, mirrorHandler);
         } else {
-            this.stream = new PrintStream(new LineFeedNormalizer(outputStream), false, StandardCharsets.UTF_8.name());
+            this.outputStream = new LineFeedNormalizer(rawStream);
         }
     }
 
@@ -106,11 +115,35 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     /**
      * Gets the underlying stream used to write message to the log file.
      *
+     * <p>A {@link PrintStream} never reports a failed write through an exception; it only sets an
+     * internal error flag that nothing in this plugin ever checks, so a failure to write a message
+     * is silently lost. Prefer {@link #getOutputStream()}, which reports a failed write by throwing.
+     *
      * @return The underlying stream used to write message to the log file, never <code>null</code>.
+     * @deprecated Use {@link #getOutputStream()} instead.
      */
     @Override
+    @Deprecated
     public PrintStream getPrintStream() {
-        return stream;
+        if (printStream == null) {
+            try {
+                printStream = new PrintStream(outputStream, false, StandardCharsets.UTF_8.name());
+            } catch (UnsupportedEncodingException e) {
+                // UTF-8 is a required charset on every Java platform, so this never happens.
+                throw new AssertionError(e);
+            }
+        }
+        return printStream;
+    }
+
+    /**
+     * Gets the underlying stream used to write messages to the log file.
+     *
+     * @return The underlying stream used to write messages to the log file, never <code>null</code>.
+     * @since 1.10
+     */
+    public OutputStream getOutputStream() {
+        return outputStream;
     }
 
     /**
@@ -120,22 +153,30 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
      * identical across operating systems.
      *
      * @param line The message to log.
+     * @throws UncheckedIOException If the line could not be written to the log file.
      */
     @Override
     public void consumeLine(String line) {
-        stream.print(line);
-        stream.print('\n');
-        stream.flush();
+        try {
+            outputStream.write(line.getBytes(StandardCharsets.UTF_8));
+            outputStream.write('\n');
+            outputStream.flush();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write to log file " + file, e);
+        }
     }
 
     /**
      * Closes the underlying file stream.
+     *
+     * @throws UncheckedIOException If the log file could not be flushed or closed.
      */
     public void close() {
-        if (stream != null) {
-            stream.flush();
-            stream.close();
-            stream = null;
+        try {
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to close log file " + file, e);
         }
     }
 
