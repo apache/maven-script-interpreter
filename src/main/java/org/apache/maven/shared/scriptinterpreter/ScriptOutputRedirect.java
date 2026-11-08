@@ -18,10 +18,9 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Locale;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Routes {@code System.out} and {@code System.err} of the current thread to a script's log while that script runs,
@@ -51,8 +50,8 @@ final class ScriptOutputRedirect implements AutoCloseable {
             if (active == 1) {
                 originalOut = System.out;
                 originalErr = System.err;
-                System.setOut(new DispatchingPrintStream(originalOut));
-                System.setErr(new DispatchingPrintStream(originalErr));
+                System.setOut(DispatchingPrintStream.over(originalOut));
+                System.setErr(DispatchingPrintStream.over(originalErr));
             }
         }
         context = new Context(resolve(target), CURRENT.get());
@@ -118,24 +117,46 @@ final class ScriptOutputRedirect implements AutoCloseable {
     }
 
     /**
-     * A print stream that hands every call to the redirect of the current thread, or to the stream it replaced.
-     * Calls are forwarded whole (a {@code println} stays one {@code println}) so a target that mirrors lines on
-     * flush, such as {@link FileLogger}, sees the same line boundaries as before.
+     * A print stream that hands every byte it produces to the redirect of the current thread, or to the stream it
+     * replaced. All of {@code print}, {@code println}, {@code printf}, {@code format} and {@code append} encode their
+     * text (as UTF-8, the encoding of {@link FileLogger}) and end in the write methods of the underlying
+     * {@link OutputStream}, so overriding those is enough.
      */
     private static final class DispatchingPrintStream extends PrintStream {
+        private final Dispatcher dispatcher;
+
+        static DispatchingPrintStream over(PrintStream fallback) {
+            try {
+                return new DispatchingPrintStream(new Dispatcher(fallback));
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalStateException(e); // UTF-8 is always available
+            }
+        }
+
+        private DispatchingPrintStream(Dispatcher dispatcher) throws UnsupportedEncodingException {
+            super(dispatcher, false, "UTF-8");
+            this.dispatcher = dispatcher;
+        }
+
+        PrintStream target() {
+            return dispatcher.target();
+        }
+
+        @Override
+        public void close() {
+            // the streams behind the dispatch are owned by their creators
+        }
+    }
+
+    /** The byte sink of a {@link DispatchingPrintStream}: forwards to the stream chosen for the calling thread. */
+    private static final class Dispatcher extends OutputStream {
         private final PrintStream fallback;
 
-        DispatchingPrintStream(PrintStream fallback) {
-            super(new OutputStream() {
-                @Override
-                public void write(int b) {
-                    throw new IllegalStateException("all writes are dispatched");
-                }
-            });
+        Dispatcher(PrintStream fallback) {
             this.fallback = fallback;
         }
 
-        private PrintStream target() {
+        PrintStream target() {
             for (Context c = CURRENT.get(); c != null; c = c.parent) {
                 if (!c.closed) {
                     return c.target;
@@ -155,160 +176,8 @@ final class ScriptOutputRedirect implements AutoCloseable {
         }
 
         @Override
-        public void write(byte[] buf) throws IOException {
-            target().write(buf);
-        }
-
-        @Override
         public void flush() {
             target().flush();
-        }
-
-        @Override
-        public void close() {
-            // the streams behind the dispatch are owned by their creators
-        }
-
-        @Override
-        public boolean checkError() {
-            return target().checkError();
-        }
-
-        @Override
-        public void print(boolean b) {
-            target().print(b);
-        }
-
-        @Override
-        public void print(char c) {
-            target().print(c);
-        }
-
-        @Override
-        public void print(int i) {
-            target().print(i);
-        }
-
-        @Override
-        public void print(long l) {
-            target().print(l);
-        }
-
-        @Override
-        public void print(float f) {
-            target().print(f);
-        }
-
-        @Override
-        public void print(double d) {
-            target().print(d);
-        }
-
-        @Override
-        public void print(char[] s) {
-            target().print(s);
-        }
-
-        @Override
-        public void print(String s) {
-            target().print(s);
-        }
-
-        @Override
-        public void print(Object obj) {
-            target().print(obj);
-        }
-
-        @Override
-        public void println() {
-            target().println();
-        }
-
-        @Override
-        public void println(boolean x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(char x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(int x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(long x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(float x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(double x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(char[] x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(String x) {
-            target().println(x);
-        }
-
-        @Override
-        public void println(Object x) {
-            target().println(x);
-        }
-
-        @Override
-        public PrintStream printf(String format, Object... args) {
-            target().printf(format, args);
-            return this;
-        }
-
-        @Override
-        public PrintStream printf(Locale l, String format, Object... args) {
-            target().printf(l, format, args);
-            return this;
-        }
-
-        @Override
-        public PrintStream format(String format, Object... args) {
-            target().format(format, args);
-            return this;
-        }
-
-        @Override
-        public PrintStream format(Locale l, String format, Object... args) {
-            target().format(l, format, args);
-            return this;
-        }
-
-        @Override
-        public PrintStream append(CharSequence csq) {
-            target().append(csq);
-            return this;
-        }
-
-        @Override
-        public PrintStream append(CharSequence csq, int start, int end) {
-            target().append(csq, start, end);
-            return this;
-        }
-
-        @Override
-        public PrintStream append(char c) {
-            target().append(c);
-            return this;
         }
     }
 }

@@ -24,6 +24,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -164,6 +165,65 @@ class ScriptOutputRedirectTest {
         } finally {
             System.setOut(originalOut);
         }
+    }
+
+    @Test
+    void everyPrintMethodOfBothStreamsLandsInTheScriptLog() throws Exception {
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream realOut = new ByteArrayOutputStream();
+        ByteArrayOutputStream realErr = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(realOut, true, "UTF-8"));
+        System.setErr(new PrintStream(realErr, true, "UTF-8"));
+        ByteArrayOutputStream log = new ByteArrayOutputStream();
+        ByteArrayOutputStream expected = new ByteArrayOutputStream();
+        try {
+            PrintStream reference = new PrintStream(expected, true, "UTF-8");
+            exerciseEveryMethod(reference);
+            exerciseEveryMethod(reference);
+            try (ScriptOutputRedirect redirect = ScriptOutputRedirect.to(new PrintStream(log, true, "UTF-8"))) {
+                exerciseEveryMethod(System.out);
+                exerciseEveryMethod(System.err);
+            }
+        } finally {
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+        assertEquals(expected.toString("UTF-8"), log.toString("UTF-8"));
+        assertEquals(0, realOut.size());
+        assertEquals(0, realErr.size());
+    }
+
+    private static void exerciseEveryMethod(PrintStream stream) throws Exception {
+        stream.print(true);
+        stream.print('c');
+        stream.print(42);
+        stream.print(43L);
+        stream.print(1.5f);
+        stream.print(2.5d);
+        stream.print(new char[] {'a', 'b'});
+        stream.print("s\u00e9\u20ac");
+        stream.print((Object) "o");
+        stream.println();
+        stream.println(false);
+        stream.println('d');
+        stream.println(7);
+        stream.println(8L);
+        stream.println(3.5f);
+        stream.println(4.5d);
+        stream.println(new char[] {'e', 'f'});
+        stream.println("line\u00e9");
+        stream.println((Object) "obj");
+        stream.printf("%s-%d%n", "p", 1);
+        stream.printf(Locale.GERMANY, "%.2f%n", 1.5d);
+        stream.format("%s%n", "f");
+        stream.format(Locale.FRANCE, "%.1f%n", 2.5d);
+        stream.append("cs").append("xyz", 1, 2).append('c');
+        stream.write('w');
+        stream.write(new byte[] {'b', 'y'});
+        stream.write(new byte[] {'0', 'b', 'z', '1'}, 1, 2);
+        stream.println();
+        stream.flush();
     }
 
     private Callable<String> script(String name, CyclicBarrier barrier) {
