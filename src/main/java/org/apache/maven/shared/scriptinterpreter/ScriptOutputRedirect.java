@@ -47,7 +47,8 @@ final class ScriptOutputRedirect implements AutoCloseable {
 
     private ScriptOutputRedirect(PrintStream target) {
         synchronized (LOCK) {
-            if (active++ == 0) {
+            active++;
+            if (active == 1) {
                 originalOut = System.out;
                 originalErr = System.err;
                 System.setOut(new DispatchingPrintStream(originalOut));
@@ -76,7 +77,8 @@ final class ScriptOutputRedirect implements AutoCloseable {
             CURRENT.remove();
         }
         synchronized (LOCK) {
-            if (--active == 0) {
+            active--;
+            if (active == 0) {
                 System.setOut(originalOut);
                 System.setErr(originalErr);
                 originalOut = null;
