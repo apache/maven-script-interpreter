@@ -56,7 +56,19 @@ final class ScriptOutputRedirect implements AutoCloseable {
             }
         }
         previous = CURRENT.get();
-        CURRENT.set(target);
+        CURRENT.set(resolve(target));
+    }
+
+    /**
+     * Follows a dispatching stream (such as the current {@code System.out}) to the stream it would write to for this
+     * thread, so a script handed {@code System.out} as its output cannot dispatch back to itself.
+     */
+    private static PrintStream resolve(PrintStream stream) {
+        PrintStream resolved = stream;
+        while (resolved instanceof DispatchingPrintStream) {
+            resolved = ((DispatchingPrintStream) resolved).target();
+        }
+        return resolved;
     }
 
     /**

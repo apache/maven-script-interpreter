@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -100,6 +101,21 @@ class ScriptOutputRedirectTest {
         }
         assertSame(out, System.out);
         assertSame(err, System.err);
+    }
+
+    @Test
+    void currentStreamAsTargetDoesNotRecurse() throws Exception {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        PrintStream target = new PrintStream(captured, true, "UTF-8");
+        try (ScriptOutputRedirect outer = ScriptOutputRedirect.to(target)) {
+            // System.out is the dispatching stream here, handing it to a script as its output must not loop
+            try (ScriptOutputRedirect inner = ScriptOutputRedirect.to(System.out)) {
+                System.out.println("through the dispatcher");
+            }
+        }
+        assertEquals("through the dispatcher" + System.lineSeparator(), captured.toString("UTF-8"));
+        assertSame(originalOut, System.out);
     }
 
     private Callable<String> script(String name, CyclicBarrier barrier) {
