@@ -32,6 +32,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -58,12 +59,18 @@ class ScriptOutputRedirectTest {
         System.setOut(new PrintStream(outsideOut, true, "UTF-8"));
         ExecutorService pool = Executors.newFixedThreadPool(3);
         try {
-            // the two scripts wait for each other at the barrier, so they are running at the same time
+            // the two scripts wait for each other at the barrier, so they are running at the same time; each one
+            // then prints and keeps running until the bystander has printed, so the bystander's line is written
+            // while both redirects are active
             CyclicBarrier barrier = new CyclicBarrier(2);
-            Future<String> first = pool.submit(script("first", barrier));
-            Future<String> second = pool.submit(script("second", barrier));
+            CountDownLatch printed = new CountDownLatch(2);
+            CountDownLatch bystanderDone = new CountDownLatch(1);
+            Future<String> first = pool.submit(script("first", barrier, printed, bystanderDone));
+            Future<String> second = pool.submit(script("second", barrier, printed, bystanderDone));
             Future<?> bystander = pool.submit(() -> {
+                assertTrue(printed.await(30, TimeUnit.SECONDS));
                 System.out.println("bystander line");
+                bystanderDone.countDown();
                 return null;
             });
             bystander.get();
@@ -74,6 +81,7 @@ class ScriptOutputRedirectTest {
             assertTrue(firstLog.contains("error first") && firstLog.contains("end first"), firstLog);
             assertFalse(firstLog.contains("second"), firstLog);
             assertTrue(secondLog.contains("start second") && secondLog.contains("system second"), secondLog);
+            assertTrue(secondLog.contains("error second") && secondLog.contains("end second"), secondLog);
             assertFalse(secondLog.contains("first"), secondLog);
             assertFalse(
                     firstLog.contains("bystander") || secondLog.contains("bystander"), "scripts captured a bystander");
@@ -226,11 +234,14 @@ class ScriptOutputRedirectTest {
         stream.flush();
     }
 
-    private Callable<String> script(String name, CyclicBarrier barrier) {
+    private Callable<String> script(
+            String name, CyclicBarrier barrier, CountDownLatch printed, CountDownLatch bystanderDone) {
         return () -> {
             File logFile = new File(tempDir, name + ".log");
             Map<String, Object> context = new HashMap<>();
             context.put("barrier", barrier);
+            context.put("printed", printed);
+            context.put("bystanderDone", bystanderDone);
             try (FileLogger logger = new FileLogger(logFile);
                     ScriptRunner runner = new ScriptRunner()) {
                 runner.setGlobalVariable("name", name);

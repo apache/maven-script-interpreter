@@ -17,11 +17,14 @@
  * under the License.
  */
 
-// prints, waits for the other script to print too, prints again: interleaving across threads must not leak
+// prints, waits for the other script, prints on both streams, then stays alive until the bystander thread has
+// printed too: output of a thread outside the scripts must not end up in either log
+def seconds = java.util.concurrent.TimeUnit.SECONDS
 println "start " + name
-context.get("barrier").await()
+assert context.get("barrier").await(30, seconds) >= 0
 System.out.println "system " + name
 System.err.println "error " + name
-Thread.sleep(50)
+context.get("printed").countDown()
+assert context.get("bystanderDone").await(30, seconds)
 println "end " + name
 return true
