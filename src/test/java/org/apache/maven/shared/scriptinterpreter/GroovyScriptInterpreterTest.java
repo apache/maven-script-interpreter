@@ -63,6 +63,19 @@ class GroovyScriptInterpreterTest {
     }
 
     @Test
+    void evaluateScriptLeavesTheCallersVariablesAlone() throws Exception {
+        Map<String, Object> vars = Collections.unmodifiableMap(Collections.singletonMap("name", "value"));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {
+            assertEquals(
+                    Boolean.TRUE,
+                    interpreter.evaluateScript("print name\nundeclared = 1\nreturn true", vars, new PrintStream(out)));
+        }
+        assertEquals("value", out.toString());
+        assertEquals(Collections.singletonMap("name", "value"), vars);
+    }
+
+    @Test
     void evaluateScriptWithDefaultClassPath() throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (ScriptInterpreter interpreter = new GroovyScriptInterpreter()) {

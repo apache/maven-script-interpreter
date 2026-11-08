@@ -146,7 +146,14 @@ class GroovyScriptInterpreter implements ScriptInterpreter {
             if (targetBytecode != null) {
                 compilerConfiguration.setTargetBytecode(normalizeTargetBytecode(targetBytecode));
             }
-            Binding binding = new Binding(globalVariables);
+            // a fresh binding: new Binding(Map) would keep the caller's map and write "out" and the script's own
+            // variables into it, which fails for an immutable map
+            Binding binding = new Binding();
+            if (globalVariables != null) {
+                for (Map.Entry<String, ?> entry : globalVariables.entrySet()) {
+                    binding.setVariable(entry.getKey(), entry.getValue());
+                }
+            }
             if (scriptOutput != null) {
                 // println/print/printf in a Groovy script go to the "out" variable when one is bound
                 binding.setVariable("out", scriptOutput);
