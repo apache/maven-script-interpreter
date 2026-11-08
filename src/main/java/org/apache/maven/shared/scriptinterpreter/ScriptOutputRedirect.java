@@ -35,7 +35,7 @@ final class ScriptOutputRedirect implements AutoCloseable {
 
     private static final Object LOCK = new Object();
 
-    private static final InheritableThreadLocal<PrintStream> CURRENT = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<Context> CURRENT = new InheritableThreadLocal<>();
 
     private static int active;
 
@@ -43,7 +43,7 @@ final class ScriptOutputRedirect implements AutoCloseable {
 
     private static PrintStream originalErr;
 
-    private final PrintStream previous;
+    private final Context context;
 
     private ScriptOutputRedirect(PrintStream target) {
         synchronized (LOCK) {
@@ -55,8 +55,8 @@ final class ScriptOutputRedirect implements AutoCloseable {
                 System.setErr(new DispatchingPrintStream(originalErr));
             }
         }
-        previous = CURRENT.get();
-        CURRENT.set(resolve(target));
+        context = new Context(resolve(target), CURRENT.get());
+        CURRENT.set(context);
     }
 
     /**
@@ -83,8 +83,9 @@ final class ScriptOutputRedirect implements AutoCloseable {
 
     @Override
     public void close() {
-        if (previous != null) {
-            CURRENT.set(previous);
+        context.closed = true;
+        if (context.parent != null) {
+            CURRENT.set(context.parent);
         } else {
             CURRENT.remove();
         }
@@ -96,6 +97,23 @@ final class ScriptOutputRedirect implements AutoCloseable {
                 originalOut = null;
                 originalErr = null;
             }
+        }
+    }
+
+    /**
+     * One redirect. Threads started while it is active inherit it and may outlive it; once it is closed they use the
+     * enclosing redirect, or the original stream when there is none.
+     */
+    private static final class Context {
+        final PrintStream target;
+
+        final Context parent;
+
+        volatile boolean closed;
+
+        Context(PrintStream target, Context parent) {
+            this.target = target;
+            this.parent = parent;
         }
     }
 
@@ -118,8 +136,12 @@ final class ScriptOutputRedirect implements AutoCloseable {
         }
 
         private PrintStream target() {
-            PrintStream current = CURRENT.get();
-            return current != null ? current : fallback;
+            for (Context c = CURRENT.get(); c != null; c = c.parent) {
+                if (!c.closed) {
+                    return c.target;
+                }
+            }
+            return fallback;
         }
 
         @Override

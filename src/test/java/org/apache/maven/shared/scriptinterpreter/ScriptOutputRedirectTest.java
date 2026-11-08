@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -116,6 +117,53 @@ class ScriptOutputRedirectTest {
         }
         assertEquals("through the dispatcher" + System.lineSeparator(), captured.toString("UTF-8"));
         assertSame(originalOut, System.out);
+    }
+
+    @Test
+    void threadOutlivingTheScriptFallsBackToTheEnclosingTargetOrTheRealStream() throws Exception {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream real = new ByteArrayOutputStream();
+        ByteArrayOutputStream outerLog = new ByteArrayOutputStream();
+        ByteArrayOutputStream innerLog = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(real, true, "UTF-8"));
+        try {
+            CountDownLatch printedWhileInner = new CountDownLatch(1);
+            CountDownLatch innerClosed = new CountDownLatch(1);
+            CountDownLatch outerClosed = new CountDownLatch(1);
+            CountDownLatch printedAfterInner = new CountDownLatch(1);
+            Thread child;
+            try (ScriptOutputRedirect outer = ScriptOutputRedirect.to(new PrintStream(outerLog, true, "UTF-8"))) {
+                try (ScriptOutputRedirect inner = ScriptOutputRedirect.to(new PrintStream(innerLog, true, "UTF-8"))) {
+                    PrintStream dispatcher = System.out;
+                    // started inside the inner script, so it inherits the inner script's redirect
+                    child = new Thread(() -> {
+                        try {
+                            dispatcher.println("while inner runs");
+                            printedWhileInner.countDown();
+                            innerClosed.await();
+                            dispatcher.println("after inner closed");
+                            printedAfterInner.countDown();
+                            outerClosed.await();
+                            dispatcher.println("after all closed");
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+                    child.start();
+                    printedWhileInner.await();
+                }
+                innerClosed.countDown();
+                printedAfterInner.await();
+            }
+            outerClosed.countDown();
+            child.join();
+
+            assertEquals("while inner runs" + System.lineSeparator(), innerLog.toString("UTF-8"));
+            assertEquals("after inner closed" + System.lineSeparator(), outerLog.toString("UTF-8"));
+            assertEquals("after all closed" + System.lineSeparator(), real.toString("UTF-8"));
+        } finally {
+            System.setOut(originalOut);
+        }
     }
 
     private Callable<String> script(String name, CyclicBarrier barrier) {
