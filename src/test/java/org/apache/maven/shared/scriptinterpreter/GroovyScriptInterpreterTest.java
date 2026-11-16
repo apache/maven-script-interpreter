@@ -187,17 +187,17 @@ class GroovyScriptInterpreterTest {
                 "org/apache/commons/io/FilenameUtils.java",
                 "package org.apache.commons.io;\n\npublic class FilenameUtils {\n}\n");
 
-        assertTrue(
+        assertEquals(
+                0,
                 compiler.run(
-                                null,
-                                null,
-                                null,
-                                "-d",
-                                classesDir.getAbsolutePath(),
-                                binding.getAbsolutePath(),
-                                script.getAbsolutePath(),
-                                filenameUtils.getAbsolutePath())
-                        == 0,
+                        null,
+                        null,
+                        null,
+                        "-d",
+                        classesDir.getAbsolutePath(),
+                        binding.getAbsolutePath(),
+                        script.getAbsolutePath(),
+                        filenameUtils.getAbsolutePath()),
                 "compilation of the shadowing classes failed");
 
         return classesDir;
