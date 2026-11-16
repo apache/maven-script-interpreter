@@ -235,7 +235,7 @@ public class ScriptRunner implements Closeable {
                 logger.consumeLine("Running " + scriptDescription + ": " + scriptFile);
             }
 
-            PrintStream out = (logger != null) ? logger.getPrintStream() : null;
+            PrintStream out = logger != null ? logger.getPrintStream() : null;
 
             Map<String, Object> scriptVariables = new HashMap<>(this.globalVariables);
             scriptVariables.put("basedir", basedir);
@@ -249,7 +249,7 @@ public class ScriptRunner implements Closeable {
                 logger.consumeLine("Finished " + scriptDescription + ": " + scriptFile);
             }
         } catch (ScriptEvaluationException e) {
-            Throwable t = (e.getCause() != null) ? e.getCause() : e;
+            Throwable t = e.getCause() != null ? e.getCause() : e;
             if (logger != null) {
                 t.printStackTrace(logger.getPrintStream());
             }
