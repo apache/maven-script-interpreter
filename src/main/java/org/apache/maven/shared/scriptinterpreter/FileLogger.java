@@ -131,6 +131,7 @@ public class FileLogger implements ExecutionLogger, AutoCloseable {
     /**
      * Closes the underlying file stream.
      */
+    @Override
     public void close() {
         if (stream != null) {
             stream.flush();
