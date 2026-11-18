@@ -31,7 +31,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -196,12 +198,15 @@ class ScriptRunnerTest {
 
         try (FileLogger fileLogger = new FileLogger(logFile, mirrorHandler);
                 ScriptRunner scriptRunner = new ScriptRunner()) {
-            scriptRunner.run("test", new File("src/test/resources/groovy-test"), "failed", buildContext(), fileLogger);
-        } catch (ScriptEvaluationException expected) {
-            String logContent = new String(Files.readAllBytes(logFile.toPath()));
-            assertTrue(logContent.contains(new File("src/test/resources/groovy-test/failed.groovy").getPath()));
-            assertEquals(logContent, mirrorHandler.getLoggedMessage());
+            assertThrows(
+                    ScriptEvaluationException.class,
+                    () -> scriptRunner.run(
+                            "test", new File("src/test/resources/groovy-test"), "failed", buildContext(), fileLogger));
         }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()));
+        assertTrue(logContent.contains(new File("src/test/resources/groovy-test/failed.groovy").getPath()));
+        assertEquals(logContent, mirrorHandler.getLoggedMessage());
     }
 
     @Test
@@ -215,7 +220,7 @@ class ScriptRunnerTest {
                     "test", new File("src/test/resources/groovy-test"), "return-false", buildContext(), fileLogger);
             fail();
         } catch (ScriptReturnException expected) {
-            assertEquals(false, expected.getResult());
+            assertFalse((Boolean) expected.getResult());
             assertEquals("The test returned false.", expected.getMessage());
             String logContent = new String(Files.readAllBytes(logFile.toPath()));
             assertTrue(logContent.contains(new File("src/test/resources/groovy-test/return-false.groovy").getPath()));
