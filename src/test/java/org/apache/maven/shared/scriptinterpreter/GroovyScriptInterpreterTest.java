@@ -34,6 +34,8 @@ import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -211,11 +213,9 @@ class GroovyScriptInterpreterTest {
         return sourceFile;
     }
 
-    @Test
-    void normalizeTargetBytecodeMapsOldJdksToDotForm() {
-        assertEquals("1.4", GroovyScriptInterpreter.normalizeTargetBytecode("4"));
-        assertEquals("1.8", GroovyScriptInterpreter.normalizeTargetBytecode("8"));
-        assertEquals("9", GroovyScriptInterpreter.normalizeTargetBytecode("9"));
-        assertEquals("17", GroovyScriptInterpreter.normalizeTargetBytecode("17"));
+    @ParameterizedTest
+    @CsvSource({"4, 1.4", "8, 1.8", "9, 9", "17, 17"})
+    void normalizeTargetBytecodeMapsOldJdksToDotForm(String version, String expected) {
+        assertEquals(expected, GroovyScriptInterpreter.normalizeTargetBytecode(version));
     }
 }
