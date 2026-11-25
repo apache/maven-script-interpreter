@@ -47,7 +47,7 @@ project:
     key: maven-script-interpreter
     committee: maven
     name: Apache Maven Script Interpreter
-    description: This component provides some utilities to interpret/execute some scripts for various implementations groovy or beanshell.
+    description: Utilities for Maven plugins and Java applications that execute Groovy scripts at runtime, with support for script discovery, context variables, additional classpath entries, and captured script output. BeanShell script support is deprecated.
     homepage: https://maven.apache.org/shared/maven-script-interpreter/
     download_page: https://maven.apache.org/shared/maven-script-interpreter/download.cgi
     bug_database: https://maven.apache.org/shared/maven-script-interpreter/issue-management.html
