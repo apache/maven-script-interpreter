@@ -29,6 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -62,8 +64,13 @@ public class ScriptRunner implements Closeable {
     private String encoding;
 
     /**
-     * Creates a new script runner with BSH and Groovy interpreters. BeanShell is deprecated: it becomes an optional
-     * dependency in 1.11 and support for it will be removed later.
+     * The script files already warned about, so that each deprecation warning is logged once per file.
+     */
+    private final Set<File> warnedScripts = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Creates a new script runner with BSH and Groovy interpreters. BeanShell is deprecated and support for it will be
+     * removed in 1.12.
      */
     @SuppressWarnings("deprecation")
     public ScriptRunner() {
@@ -202,17 +209,18 @@ public class ScriptRunner implements Closeable {
             final Map<String, ?> context,
             final ExecutionLogger logger)
             throws IOException, ScriptException {
-        ScriptInterpreter interpreter = getInterpreter(scriptFile);
+        ScriptInterpreter interpreter = getInterpreter(scriptFile, logger);
         if (LOG.isDebugEnabled()) {
             String name = interpreter.getClass().getName();
             name = name.substring(name.lastIndexOf('.') + 1);
             LOG.debug("Running script with {} :{}", name, scriptFile);
         }
         if (interpreter instanceof BeanShellScriptInterpreter) {
-            LOG.warn(
-                    "BeanShell scripts are deprecated, port {} to Groovy; BeanShell becomes an optional dependency"
-                            + " in maven-script-interpreter 1.11 and support for it will be removed later",
-                    scriptFile);
+            warnOnce(
+                    scriptFile,
+                    "BeanShell scripts are deprecated and support for them will be removed, port " + scriptFile
+                            + " to Groovy",
+                    logger);
         }
 
         String script;
@@ -284,22 +292,41 @@ public class ScriptRunner implements Closeable {
     /**
      * Determines the script interpreter for the specified script file by looking at its file extension. In this
      * context, file extensions are considered case-insensitive. Groovy is used for any unrecognized extension; up to
-     * 1.9 that was BeanShell, which is deprecated and becomes an optional dependency in 1.11.
+     * 1.9 that was BeanShell, which is deprecated and will be removed in 1.12.
      *
      * @param scriptFile The script file for which to determine an interpreter, must not be <code>null</code>.
+     * @param logger The logger that also receives the warning for an unrecognized extension, may be <code>null</code>.
      * @return The script interpreter for the file, never <code>null</code>.
      */
-    private ScriptInterpreter getInterpreter(File scriptFile) {
+    private ScriptInterpreter getInterpreter(File scriptFile, ExecutionLogger logger) {
         String ext = FilenameUtils.getExtension(scriptFile.getName()).toLowerCase(Locale.ENGLISH);
         ScriptInterpreter interpreter = scriptInterpreters.get(ext);
         if (interpreter == null) {
-            LOG.warn(
-                    "No interpreter registered for the extension of {}, running it as Groovy; up to"
+            warnOnce(
+                    scriptFile,
+                    "No interpreter registered for the extension of " + scriptFile + ", running it as Groovy; up to"
                             + " maven-script-interpreter 1.9 such scripts ran as BeanShell",
-                    scriptFile);
+                    logger);
             interpreter = scriptInterpreters.get("groovy");
         }
         return interpreter;
+    }
+
+    /**
+     * Logs a warning about a script file the first time this runner sees that file, and copies it to the execution
+     * logger so that it also lands in the build log of the script.
+     *
+     * @param scriptFile The script file the warning is about, must not be <code>null</code>.
+     * @param message The warning, must not be <code>null</code>.
+     * @param logger The logger that also receives the warning, may be <code>null</code>.
+     */
+    private void warnOnce(File scriptFile, String message, ExecutionLogger logger) {
+        if (warnedScripts.add(scriptFile.getAbsoluteFile())) {
+            LOG.warn(message);
+            if (logger != null) {
+                logger.consumeLine("[WARNING] " + message);
+            }
+        }
     }
 
     /**

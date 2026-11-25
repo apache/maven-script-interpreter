@@ -66,6 +66,23 @@ class ScriptRunnerTest {
     }
 
     @Test
+    void beanshellDeprecationWarnedOncePerScript() throws Exception {
+        File logFile = new File(tempDir, "build.log");
+
+        try (FileLogger fileLogger = new FileLogger(logFile);
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("first", new File("src/test/resources/bsh-test"), "return-null", null, fileLogger);
+            scriptRunner.run("second", new File("src/test/resources/bsh-test"), "return-null", null, fileLogger);
+        }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+        String warning = "[WARNING] BeanShell scripts are deprecated";
+        assertEquals(logContent.indexOf(warning), logContent.lastIndexOf(warning), logContent);
+        assertTrue(logContent.contains(warning), logContent);
+        assertTrue(logContent.contains("Finished second"), logContent);
+    }
+
+    @Test
     void beanshellReturnedNullShouldBeOk() throws Exception {
         File logFile = new File(tempDir, "build.log");
 
