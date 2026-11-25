@@ -69,6 +69,11 @@ public class ScriptRunner implements Closeable {
     private final Set<File> warnedScripts = ConcurrentHashMap.newKeySet();
 
     /**
+     * Whether running a BeanShell script logs the deprecation warning.
+     */
+    private volatile boolean beanShellWarning = true;
+
+    /**
      * Creates a new script runner with BSH and Groovy interpreters. BeanShell is deprecated and support for it will be
      * removed in 1.12.
      */
@@ -98,6 +103,18 @@ public class ScriptRunner implements Closeable {
      */
     public void setGlobalVariable(String name, Object value) {
         this.globalVariables.put(name, value);
+    }
+
+    /**
+     * Sets whether running a BeanShell script logs the deprecation warning, so that callers can let their users
+     * silence it while they port their scripts. It goes away together with BeanShell support in 1.12.
+     *
+     * @param beanShellWarning <code>false</code> to run BeanShell scripts without the deprecation warning, the
+     *            default is <code>true</code>.
+     * @since 1.10
+     */
+    public void setBeanShellWarning(boolean beanShellWarning) {
+        this.beanShellWarning = beanShellWarning;
     }
 
     /**
@@ -215,7 +232,7 @@ public class ScriptRunner implements Closeable {
             name = name.substring(name.lastIndexOf('.') + 1);
             LOG.debug("Running script with {} :{}", name, scriptFile);
         }
-        if (interpreter instanceof BeanShellScriptInterpreter) {
+        if (beanShellWarning && interpreter instanceof BeanShellScriptInterpreter) {
             warnOnce(
                     scriptFile,
                     "BeanShell scripts are deprecated and support for them will be removed, port " + scriptFile

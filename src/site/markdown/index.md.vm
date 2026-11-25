@@ -21,7 +21,7 @@ under the License.
 
 This component provides some utilities to interpret/execute some scripts for various implementations: Groovy, and the deprecated BeanShell.
 
-**BeanShell is deprecated** since 1.10: port `.bsh` scripts to Groovy. Running a BeanShell script logs a warning once per script file, also in the build log of the script, and support for BeanShell will be removed in 1.12. A script with an unknown file extension runs as Groovy; up to 1.9 it ran as BeanShell. The retirement is tracked in [apache/maven#13207](https://github.com/apache/maven/issues/13207).
+**BeanShell is deprecated** since 1.10: port `.bsh` scripts to Groovy. Running a BeanShell script logs a warning once per script file, also in the build log of the script, and support for BeanShell will be removed in 1.12. Callers can switch the warning off with `ScriptRunner.setBeanShellWarning(false)`, for example to let their users silence it while they port their scripts. A script with an unknown file extension runs as Groovy; up to 1.9 it ran as BeanShell. The retirement is tracked in [apache/maven#13207](https://github.com/apache/maven/issues/13207).
 
 Dependency declaration
 ----------------------
