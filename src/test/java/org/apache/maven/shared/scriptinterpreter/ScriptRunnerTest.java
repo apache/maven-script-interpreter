@@ -21,6 +21,7 @@ package org.apache.maven.shared.scriptinterpreter;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -369,6 +370,107 @@ class ScriptRunnerTest {
         String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains("expected=café"));
         assertTrue(logContent.contains("actual=café"));
+    }
+
+    @Test
+    void groovyRunVariablesAreMergedForOneRunOnly() throws Exception {
+        File logFile = new File(tempDir, "build.log");
+        File otherLogFile = new File(tempDir, "other.log");
+        File groovyDir = new File("src/test/resources/groovy-test");
+
+        try (FileLogger fileLogger = new FileLogger(logFile, new TestMirrorHandler());
+                FileLogger otherLogger = new FileLogger(otherLogFile, new TestMirrorHandler());
+                ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.setGlobalVariable("shared", "global");
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("runVar", "first");
+            variables.put("shared", "run");
+            // must not shadow the documented variables
+            variables.put("basedir", new File("ignored"));
+            scriptRunner.run("test", groovyDir.toPath(), "run-variables", buildContext(), variables, fileLogger);
+
+            // a later run sees only its own variables: the earlier override of "shared" is gone
+            Map<String, Object> second = new HashMap<>();
+            second.put("runVar", "second");
+            scriptRunner.run("test", groovyDir.toPath(), "run-variables", buildContext(), second, otherLogger);
+        }
+
+        String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
+        assertTrue(logContent.contains("runVar=first"));
+        assertTrue(logContent.contains("shared=run"));
+        assertTrue(logContent.contains("basedirName=groovy-test"));
+
+        String otherContent = new String(Files.readAllBytes(otherLogFile.toPath()), StandardCharsets.UTF_8);
+        assertTrue(otherContent.contains("runVar=second"));
+        assertTrue(otherContent.contains("shared=global"));
+    }
+
+    @Test
+    void absoluteScriptPathStaysUnderBasedir() throws Exception {
+        Path project = Files.createDirectory(tempDir.toPath().resolve("project"));
+        Path script = tempDir.toPath().resolve("outside.groovy").toAbsolutePath();
+        Files.write(script, "context.put('ran', 'outside.groovy')\nreturn true\n".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> context = new HashMap<>();
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            // resolved as basedir + path, so an absolute path names no existing file and nothing runs
+            scriptRunner.run("test", project, script.toString(), context, null, null);
+        }
+
+        assertTrue(context.isEmpty());
+    }
+
+    @Test
+    void scriptPathThatIsNoValidPathRunsNothing() throws Exception {
+        Map<String, Object> context = new HashMap<>();
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            // as an absolute path with a drive letter joined to the base directory on Windows
+            scriptRunner.run("test", tempDir.toPath(), "a\u0000b", context, null, null);
+        }
+
+        assertTrue(context.isEmpty());
+    }
+
+    @Test
+    void emptyScriptPathRunsNothing() throws Exception {
+        Path project = Files.createDirectory(tempDir.toPath().resolve("project"));
+        Files.write(
+                tempDir.toPath().resolve("project.groovy"),
+                "context.put('ran', 'project.groovy')\nreturn true\n".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> context = new HashMap<>();
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", project, "", context, null, null);
+        }
+
+        assertTrue(context.isEmpty());
+    }
+
+    @Test
+    void directoryNamedLikeScriptFallsThroughToScriptWithExtension() throws Exception {
+        Files.createDirectory(tempDir.toPath().resolve("setup"));
+        Files.write(
+                tempDir.toPath().resolve("setup.groovy"),
+                "context.put('ran', 'setup.groovy')\nreturn true\n".getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> context = new HashMap<>();
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", tempDir.toPath(), "setup", context, null, null);
+        }
+
+        assertEquals("setup.groovy", context.get("ran"));
+    }
+
+    @Test
+    void directoryNamedLikeScriptWithoutScriptBesideItIsTreatedAsMissing() throws Exception {
+        Files.createDirectory(tempDir.toPath().resolve("setup"));
+
+        Map<String, Object> context = new HashMap<>();
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", tempDir.toPath(), "setup", context, null, null);
+        }
+
+        assertTrue(context.isEmpty());
     }
 
     private Map<String, ?> buildContext() {

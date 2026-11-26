@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +67,7 @@ public class ScriptRunner implements Closeable {
     /**
      * The script files already warned about, so that each deprecation warning is logged once per file.
      */
-    private final Set<File> warnedScripts = ConcurrentHashMap.newKeySet();
+    private final Set<Path> warnedScripts = ConcurrentHashMap.newKeySet();
 
     /**
      * Whether running a BeanShell script logs the deprecation warning.
@@ -175,23 +176,60 @@ public class ScriptRunner implements Closeable {
             final Map<String, ?> context,
             final ExecutionLogger logger)
             throws IOException, ScriptException {
-        if (relativeScriptPath == null) {
-            LOG.debug("{}: relativeScriptPath is null, not executing script", scriptDescription);
+        run(scriptDescription, basedir.toPath(), relativeScriptPath, context, null, logger);
+    }
+
+    /**
+     * Runs the specified hook script (after resolution), with additional variables that apply to this run only.
+     * <p>
+     * The <code>variables</code> are merged over the global variables for this call, so a variable of the same name
+     * wins over the global one. The runner itself is not modified, which makes this safe when one runner is shared by
+     * concurrent runs that each need their own values. The variables <code>basedir</code>, <code>scriptdir</code> and
+     * <code>context</code> always keep their documented meaning and cannot be overridden, so the precedence is: the
+     * three built-in variables, then <code>variables</code>, then the global variables. The script still sees
+     * <code>basedir</code> and <code>scriptdir</code> as {@link File}.
+     * <p>
+     * The script path is joined to the base directory even when it is absolute. Only a regular file counts as the
+     * script: a directory of that name is ignored and the name is tried with each registered extension instead.
+     *
+     * @param scriptDescription The description of the script to use for logging, must not be <code>null</code>.
+     * @param basedir The base directory of the project, must not be <code>null</code>.
+     * @param relativeScriptPath The path to the script relative to the project base directory, may be <code>null</code>
+     *            to skip the script execution and may not have extensions (resolution will search).
+     * @param context The key-value storage used to share information between hook scripts, may be <code>null</code>.
+     * @param variables Variables to expose to this script only, may be <code>null</code>.
+     * @param logger The logger to redirect the script output to, may be <code>null</code> to use stdout/stderr.
+     * @throws IOException If an I/O error occurred while reading the script file.
+     * @throws ScriptException If the script did not return <code>true</code> of threw an exception.
+     * @since 1.10
+     */
+    public void run(
+            final String scriptDescription,
+            final Path basedir,
+            final String relativeScriptPath,
+            final Map<String, ?> context,
+            final Map<String, ?> variables,
+            final ExecutionLogger logger)
+            throws IOException, ScriptException {
+        if (relativeScriptPath == null || relativeScriptPath.isEmpty()) {
+            LOG.debug("{}: relativeScriptPath is null or empty, not executing script", scriptDescription);
             return;
         }
 
-        final File scriptFile = resolveScript(new File(basedir, relativeScriptPath));
+        // File semantics on purpose: an absolute relativeScriptPath still lands under basedir, as up to 1.9, and a
+        // name that is no valid Path (such as that join on Windows) is a missing script, not an error
+        final File scriptFile = resolveScript(new File(basedir.toFile(), relativeScriptPath));
 
-        if (!scriptFile.exists()) {
+        if (!scriptFile.isFile()) {
             LOG.debug(
                     "{} : no script '{}' found in directory {}",
                     scriptDescription,
                     relativeScriptPath,
-                    basedir.getAbsolutePath());
+                    basedir.toAbsolutePath());
             return;
         }
 
-        executeRun(scriptDescription, basedir, scriptFile, context, logger);
+        executeRun(scriptDescription, basedir, scriptFile.toPath(), context, variables, logger);
     }
 
     /**
@@ -216,14 +254,16 @@ public class ScriptRunner implements Closeable {
             return;
         }
 
-        executeRun(scriptDescription, scriptFile.getParentFile(), scriptFile, context, logger);
+        Path script = scriptFile.toPath();
+        executeRun(scriptDescription, script.getParent(), script, context, null, logger);
     }
 
     private void executeRun(
             final String scriptDescription,
-            final File basedir,
-            File scriptFile,
+            final Path basedir,
+            final Path scriptFile,
             final Map<String, ?> context,
+            final Map<String, ?> variables,
             final ExecutionLogger logger)
             throws IOException, ScriptException {
         ScriptInterpreter interpreter = getInterpreter(scriptFile, logger);
@@ -242,15 +282,14 @@ public class ScriptRunner implements Closeable {
 
         String script;
         try {
-            byte[] bytes = Files.readAllBytes(scriptFile.toPath());
+            byte[] bytes = Files.readAllBytes(scriptFile);
             if (encoding != null) {
                 script = new String(bytes, encoding);
             } else {
                 script = new String(bytes, StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
-            String errorMessage =
-                    "error reading " + scriptDescription + " " + scriptFile.getPath() + ", " + e.getMessage();
+            String errorMessage = "error reading " + scriptDescription + " " + scriptFile + ", " + e.getMessage();
             throw new IOException(errorMessage, e);
         }
 
@@ -263,8 +302,11 @@ public class ScriptRunner implements Closeable {
             PrintStream out = logger != null ? logger.getPrintStream() : null;
 
             Map<String, Object> scriptVariables = new HashMap<>(this.globalVariables);
-            scriptVariables.put("basedir", basedir);
-            scriptVariables.put("scriptdir", scriptFile.getParentFile());
+            if (variables != null) {
+                scriptVariables.putAll(variables);
+            }
+            scriptVariables.put("basedir", toFile(basedir));
+            scriptVariables.put("scriptdir", toFile(scriptFile.getParent()));
             scriptVariables.put("context", context);
 
             synchronized (LOCK) {
@@ -286,6 +328,11 @@ public class ScriptRunner implements Closeable {
         }
     }
 
+    private static File toFile(Path path) {
+        // a script given as a bare relative file name has no parent directory
+        return path != null ? path.toFile() : null;
+    }
+
     /**
      * Gets the effective path to the specified script. For convenience, we allow to specify a script path as "verify"
      * and have the plugin auto-append the file extension to search for "verify.bsh" and "verify.groovy".
@@ -294,10 +341,10 @@ public class ScriptRunner implements Closeable {
      * @return The effective path to the script file or <code>null</code> if the input was <code>null</code>.
      */
     private File resolveScript(File scriptFile) {
-        if (scriptFile != null && !scriptFile.exists()) {
+        if (scriptFile != null && !scriptFile.isFile()) {
             for (String ext : this.scriptInterpreters.keySet()) {
                 File candidateFile = new File(scriptFile.getPath() + '.' + ext);
-                if (candidateFile.exists()) {
+                if (candidateFile.isFile()) {
                     scriptFile = candidateFile;
                     break;
                 }
@@ -315,8 +362,9 @@ public class ScriptRunner implements Closeable {
      * @param logger The logger that also receives the warning for an unrecognized extension, may be <code>null</code>.
      * @return The script interpreter for the file, never <code>null</code>.
      */
-    private ScriptInterpreter getInterpreter(File scriptFile, ExecutionLogger logger) {
-        String ext = FilenameUtils.getExtension(scriptFile.getName()).toLowerCase(Locale.ENGLISH);
+    private ScriptInterpreter getInterpreter(Path scriptFile, ExecutionLogger logger) {
+        String ext =
+                FilenameUtils.getExtension(scriptFile.getFileName().toString()).toLowerCase(Locale.ENGLISH);
         ScriptInterpreter interpreter = scriptInterpreters.get(ext);
         if (interpreter == null) {
             warnOnce(
@@ -337,8 +385,8 @@ public class ScriptRunner implements Closeable {
      * @param message The warning, must not be <code>null</code>.
      * @param logger The logger that also receives the warning, may be <code>null</code>.
      */
-    private void warnOnce(File scriptFile, String message, ExecutionLogger logger) {
-        if (warnedScripts.add(scriptFile.getAbsoluteFile())) {
+    private void warnOnce(Path scriptFile, String message, ExecutionLogger logger) {
+        if (warnedScripts.add(scriptFile.toAbsolutePath())) {
             LOG.warn(message);
             if (logger != null) {
                 logger.consumeLine("[WARNING] " + message);
