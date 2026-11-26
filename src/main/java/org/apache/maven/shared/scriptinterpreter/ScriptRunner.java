@@ -29,6 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -49,6 +51,11 @@ public class ScriptRunner implements Closeable {
      * The supported script interpreters, indexed by the lower-case file extension of their associated script files,
      * never <code>null</code>.
      */
+    /**
+     * The absolute paths of the BeanShell scripts already warned about, so each is reported once per runner.
+     */
+    private final Set<String> warnedBeanShellScripts = ConcurrentHashMap.newKeySet();
+
     private final Map<String, ScriptInterpreter> scriptInterpreters;
 
     /**
@@ -209,10 +216,7 @@ public class ScriptRunner implements Closeable {
             LOG.debug("Running script with {} :{}", name, scriptFile);
         }
         if (interpreter instanceof BeanShellScriptInterpreter) {
-            LOG.warn(
-                    "BeanShell scripts are deprecated, port {} to Groovy; BeanShell becomes an optional dependency"
-                            + " in maven-script-interpreter 1.11 and support for it will be removed later",
-                    scriptFile);
+            warnBeanShell(scriptFile, logger);
         }
 
         String script;
@@ -258,6 +262,19 @@ public class ScriptRunner implements Closeable {
 
         if (!(result == null || Boolean.parseBoolean(String.valueOf(result)))) {
             throw new ScriptReturnException("The " + scriptDescription + " returned " + result + ".", result);
+        }
+    }
+
+    private void warnBeanShell(File scriptFile, ExecutionLogger logger) {
+        if (!warnedBeanShellScripts.add(scriptFile.getAbsolutePath())) {
+            return;
+        }
+        String message = "BeanShell scripts are deprecated, port " + scriptFile + " to Groovy; BeanShell becomes an"
+                + " optional dependency in maven-script-interpreter 1.11 and support for it will be removed later: "
+                + "https://maven.apache.org/plugins/maven-invoker-plugin/examples/pre-post-build-script.html";
+        LOG.warn(message);
+        if (logger != null) {
+            logger.consumeLine("[WARNING] " + message);
         }
     }
 

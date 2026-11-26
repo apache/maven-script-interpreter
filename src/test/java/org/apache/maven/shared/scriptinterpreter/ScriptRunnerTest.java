@@ -18,11 +18,15 @@
  */
 package org.apache.maven.shared.scriptinterpreter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -337,6 +341,80 @@ class ScriptRunnerTest {
         String logContent = new String(Files.readAllBytes(logFile.toPath()), StandardCharsets.UTF_8);
         assertTrue(logContent.contains("expected=café"));
         assertTrue(logContent.contains("actual=café"));
+    }
+
+    @Test
+    void beanShellWarningIsLoggedOncePerScript() throws Exception {
+        RecordingLogger logger = new RecordingLogger();
+        File basedir = new File("src/test/resources/bsh-test");
+
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", basedir, "return-null", null, logger);
+            scriptRunner.run("test", basedir, "return-null", null, logger);
+        }
+
+        assertEquals(1, logger.warnings().size());
+    }
+
+    @Test
+    void beanShellWarningIsLoggedForEachScript() throws Exception {
+        RecordingLogger logger = new RecordingLogger();
+        File basedir = new File("src/test/resources/bsh-test");
+
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", basedir, "return-null", null, logger);
+            scriptRunner.run("test", basedir, "verify", buildContext(), logger);
+        }
+
+        List<String> warnings = logger.warnings();
+        assertEquals(2, warnings.size());
+        assertTrue(warnings.get(0).contains("return-null.bsh"));
+        assertTrue(warnings.get(1).contains("verify.bsh"));
+    }
+
+    @Test
+    void beanShellWarningReachesExecutionLoggerWithDocsLink() throws Exception {
+        RecordingLogger logger = new RecordingLogger();
+
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-null", null, logger);
+        }
+
+        String warning = logger.warnings().get(0);
+        assertTrue(warning.contains("BeanShell scripts are deprecated, port "));
+        assertTrue(warning.contains(" to Groovy"));
+        assertTrue(warning.contains("https://maven.apache.org/plugins/maven-invoker-plugin/examples/"));
+    }
+
+    @Test
+    void beanShellWarningWithoutExecutionLogger() throws Exception {
+        try (ScriptRunner scriptRunner = new ScriptRunner()) {
+            scriptRunner.run("test", new File("src/test/resources/bsh-test"), "return-null", null, null);
+        }
+    }
+
+    private static final class RecordingLogger implements ExecutionLogger {
+        private final List<String> lines = new ArrayList<>();
+
+        @Override
+        public PrintStream getPrintStream() {
+            return new PrintStream(new ByteArrayOutputStream());
+        }
+
+        @Override
+        public void consumeLine(String line) {
+            lines.add(line);
+        }
+
+        List<String> warnings() {
+            List<String> result = new ArrayList<>();
+            for (String line : lines) {
+                if (line.startsWith("[WARNING] BeanShell scripts are deprecated")) {
+                    result.add(line);
+                }
+            }
+            return result;
+        }
     }
 
     private Map<String, ?> buildContext() {
