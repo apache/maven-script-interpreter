@@ -44,8 +44,6 @@ import org.slf4j.LoggerFactory;
  */
 public class ScriptRunner implements Closeable {
 
-    private static final Object LOCK = new Object();
-
     private static final Logger LOG = LoggerFactory.getLogger(ScriptRunner.class);
 
     /**
@@ -309,9 +307,7 @@ public class ScriptRunner implements Closeable {
             scriptVariables.put("scriptdir", toFile(scriptFile.getParent()));
             scriptVariables.put("context", context);
 
-            synchronized (LOCK) {
-                result = interpreter.evaluateScript(script, scriptVariables, out);
-            }
+            result = interpreter.evaluateScript(script, scriptVariables, out);
             if (logger != null) {
                 logger.consumeLine("Finished " + scriptDescription + ": " + scriptFile);
             }

@@ -27,6 +27,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import bsh.Capabilities;
 import bsh.EvalError;
@@ -42,6 +44,11 @@ import bsh.TargetError;
  */
 @Deprecated
 class BeanShellScriptInterpreter implements ScriptInterpreter {
+
+    /**
+     * BeanShell keeps static state, so its scripts still run one at a time.
+     */
+    private static final Lock EVALUATION = new ReentrantLock();
 
     private static class ChildFirstURLClassLoader extends URLClassLoader {
         ChildFirstURLClassLoader() {
@@ -108,15 +115,11 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
     @Override
     public Object evaluateScript(String script, Map<String, ?> globalVariables, PrintStream scriptOutput)
             throws ScriptEvaluationException {
-        PrintStream origOut = System.out;
-        PrintStream origErr = System.err;
-
-        try {
+        EVALUATION.lock();
+        try (ScriptOutputRedirect redirect = scriptOutput != null ? ScriptOutputRedirect.to(scriptOutput) : null) {
             Interpreter engine = new Interpreter();
 
             if (scriptOutput != null) {
-                System.setErr(scriptOutput);
-                System.setOut(scriptOutput);
                 engine.setErr(scriptOutput);
                 engine.setOut(scriptOutput);
             }
@@ -156,8 +159,7 @@ class BeanShellScriptInterpreter implements ScriptInterpreter {
                 Thread.currentThread().setContextClassLoader(currentClassLoader);
             }
         } finally {
-            System.setErr(origErr);
-            System.setOut(origOut);
+            EVALUATION.unlock();
         }
     }
 
